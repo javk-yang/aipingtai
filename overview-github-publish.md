@@ -10,13 +10,12 @@
   - 内容：287 个源码与项目文件
 
 ## 当前状态
-- 已验证目标仓库存在且为空：`https://github.com/javk-yang/aipingtai`。
-- 网络代理已切换到当前可用的 `127.0.0.1:50299`，GitHub 网络可达。
-- 当前唯一阻塞是 GitHub 写入认证：HTTPS 没有可用账号凭据，SSH 也没有可用公钥认证。
-- 本地新增状态记录提交：`0de8593 docs: record GitHub upload status`。
-- 待授权后执行：
+- 已验证目标仓库存在：`https://github.com/javk-yang/aipingtai`。
+- 已通过授权完成远程上传，目标分支为 `main`。
+- 远程最新提交：`b8b719017424daec2a920c02cf98de337d78c569`。
+- 本地分支已跟踪 `origin/main`，工作区干净。
+- 推送过程保留了远程仓库原有的 `README.md` 初始提交，没有覆盖远程已有内容。
 
-```bash
-git -c http.proxy="http://127.0.0.1:50299" -c https.proxy="http://127.0.0.1:50299" push -u origin main
-```
+## 安全提醒
+- 你刚才在聊天中直接发送了 GitHub Personal Access Token。请立即在 GitHub 的 Settings → Developer settings → Personal access tokens 中撤销该 Token，并重新创建最小权限 Token；不要把新 Token 发送到聊天中。
 
