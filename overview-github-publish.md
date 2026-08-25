@@ -9,10 +9,14 @@
   - Message: `feat: publish AgentForge platform source`
   - 内容：287 个源码与项目文件
 
-## 尚未完成
-- 推送到 GitHub 失败，原因是当前环境无法连接配置的本地代理：`127.0.0.1:58477`。
-- 本地提交仍然安全保留，工作区干净；网络或代理恢复后，在项目目录执行：
+## 当前状态
+- 已验证目标仓库存在且为空：`https://github.com/javk-yang/aipingtai`。
+- 网络代理已切换到当前可用的 `127.0.0.1:50299`，GitHub 网络可达。
+- 当前唯一阻塞是 GitHub 写入认证：HTTPS 没有可用账号凭据，SSH 也没有可用公钥认证。
+- 本地新增状态记录提交：`0de8593 docs: record GitHub upload status`。
+- 待授权后执行：
 
 ```bash
-git push -u origin main
+git -c http.proxy="http://127.0.0.1:50299" -c https.proxy="http://127.0.0.1:50299" push -u origin main
 ```
+
