@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.agentforge</groupId>
+        <artifactId>af-parent</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>af-bootstrap</artifactId>
+    <name>af-bootstrap · 启动器</name>
+
+    <!--
+        af-bootstrap 职责单一: main() + application.yml + 聚合所有 impl 模块
+        不写任何业务代码, 不写 Controller, 只负责让 SpringBoot 跑起来
+    -->
+    <dependencies>
+        <!-- 聚合: 引入三个 impl 模块 → 它们的 Controller/Service 全部进入 classpath -->
+        <!-- af-common / af-auth-api / af-session-api 通过传递依赖自动进来 -->
+        <dependency>
+            <groupId>com.agentforge</groupId>
+            <artifactId>af-auth-impl</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.agentforge</groupId>
+            <artifactId>af-session-impl</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.agentforge</groupId>
+            <artifactId>af-agent</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- spring-boot-maven-plugin: 打成可执行 fat-jar -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <!-- mainClass 指向启动类 -->
+                    <mainClass>com.agentforge.Bootstrap</mainClass>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

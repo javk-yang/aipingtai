@@ -1,0 +1,73 @@
+# ============================================================
+# 开发环境配置 (profile=dev)
+# 生产环境用 application-prod.yml 覆盖以下值
+# ============================================================
+
+spring:
+  # MySQL 业务库
+  datasource:
+    # 环境变量优先, 本地开发用默认值 (改密码改这里)
+    url: ${MYSQL_URL:jdbc:mysql://localhost:3306/agentforge?useUnicode=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true}
+    username: ${MYSQL_USER:root}
+    password: ${MYSQL_PASSWORD:root}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10        # 开发期连接池小一点, 生产调 20-30
+      minimum-idle: 2
+      connection-timeout: 30000
+      max-lifetime: 1800000
+
+  # Redis (验证码/限流/锁/checkpoint/缓存)
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}   # 本地无密码, 生产必须设
+      database: 0
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 4
+          min-idle: 0
+
+# Agent 引擎 Python 服务地址 (P7 用)
+agent:
+  engine:
+    provider: ${AGENT_ENGINE_PROVIDER:mock} # mock | http
+    base-url: ${AGENT_ENGINE_URL:http://localhost:8000}
+    timeout: 300                     # 秒, Agent 任务可能很长
+    sse-timeout: 600                  # SSE 流式超时, 比普通请求长
+
+# ============================================================
+# JWT 认证配置 (P3)
+# 生产环境: 通过环境变量注入 JWT_SECRET, 长度 >= 32 字节
+# ============================================================
+agentforge:
+  jwt:
+    secret: ${JWT_SECRET:agentforge-dev-secret-key-0123456789abcdef0123456789}
+    access-token-ttl: 900            # Access Token 15 分钟
+    refresh-token-ttl: 604800        # Refresh Token 7 天
+    issuer: agentforge
+
+# ============================================================
+# 通知通道配置 (P3.2)
+# provider=log  → 开发环境只打日志, 不真发
+# 生产切换: 新建实现类 + 改 provider 值, 业务代码零改动
+# ============================================================
+notify:
+  sms:
+    provider: ${SMS_PROVIDER:log}    # log | aliyun | tencent
+  email:
+    provider: ${EMAIL_PROVIDER:log}  # log | smtp
+    smtp:
+      host: ${SMTP_HOST:smtp.qq.com}
+      port: ${SMTP_PORT:465}
+      username: ${SMTP_USER:}
+      password: ${SMTP_PASS:}
+
+# ============================================================
+# 安全配置 (P3.2)
+# whitelist: 额外公开路径(内置登录链路已默认公开, 这里追加即可)
+# ============================================================
+security:
+  whitelist: "${SECURITY_WHITELIST:/api/conversations,/api/conversations/**,/api/chat/stream,/internal/tools,/internal/skills,/internal/skills/**}"

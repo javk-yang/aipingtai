@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Logback 配置 —— TraceId 是这里的核心
+  %X{traceId} 从 SLF4J MDC (Mapped Diagnostic Context) 读取
+  TraceIdFilter 在请求入口把 traceId 写进 MDC, 所有后续日志自动带上
+  非 HTTP 请求 (定时任务等) MDC 里没有 traceId, 显示为空
+-->
+<configuration>
+    <!-- 日志格式: 时间 [线程] [traceId] 级别 Logger - 消息 -->
+    <property name="LOG_PATTERN"
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{traceId}] %-5level %logger{36} - %msg%n"/>
+
+    <!-- 控制台输出 -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- 开发环境: 只输出到控制台, 级别 DEBUG -->
+    <springProfile name="dev">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+        <logger name="com.agentforge" level="DEBUG"/>
+    </springProfile>
+
+    <!-- 生产环境: 只输出 INFO 以上 -->
+    <springProfile name="prod">
+        <root level="WARN">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+        <logger name="com.agentforge" level="INFO"/>
+    </springProfile>
+</configuration>

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.agentforge</groupId>
+        <artifactId>af-parent</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>af-auth-impl</artifactId>
+    <name>af-auth-impl · 认证实现</name>
+
+    <!--
+        注意依赖方向:
+        1. af-auth-impl 依赖 af-auth-api (自己的接口) — 天经地义
+        2. 绝对不依赖 af-session-impl — 铁律
+        3. mybatis-plus / redis / web 全部从 af-common 传递依赖获得, 不重复声明
+    -->
+    <dependencies>
+        <!-- 自己的 api 层 -->
+        <dependency>
+            <groupId>com.agentforge</groupId>
+            <artifactId>af-auth-api</artifactId>
+        </dependency>
+        <!-- JWT: 只有 auth 模块需要签发/解析 token -->
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId>
+        </dependency>
+        <!-- 密码加密: 只用 spring-security-crypto 的 BCrypt, 不引入整个 Spring Security 框架 -->
+        <!-- 版本由 spring-boot-starter-parent 仲裁, 无需写 version -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-crypto</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+</project>

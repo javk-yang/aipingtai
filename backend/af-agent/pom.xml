@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.agentforge</groupId>
+        <artifactId>af-parent</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>af-agent</artifactId>
+    <name>af-agent · 智能体模块</name>
+
+    <!--
+        af-agent 不拆 api/impl:
+        1. 对外暴露接口最少 — 其他 Java 模块不直接调用它
+        2. 它通过 HTTP+SSE 对接 Python 引擎, 是一个独立的"外联"模块
+        3. 拆了 api 层但没人依赖, 是过度设计
+    -->
+    <dependencies>
+        <dependency>
+            <groupId>com.agentforge</groupId>
+            <artifactId>af-common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+</project>

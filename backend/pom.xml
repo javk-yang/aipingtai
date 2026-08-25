@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- 继承 SpringBoot 父 POM: 版本仲裁 + 插件默认配置一把梭 -->
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.2.4</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>com.agentforge</groupId>
+    <artifactId>af-parent</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <name>AgentForge Parent</name>
+
+    <!-- 7 个子模块: 声明顺序 = 编译顺序 (common 最先, bootstrap 最后) -->
+    <modules>
+        <module>af-common</module>
+        <module>af-auth-api</module>
+        <module>af-auth-impl</module>
+        <module>af-session-api</module>
+        <module>af-session-impl</module>
+        <module>af-agent</module>
+        <module>af-bootstrap</module>
+    </modules>
+
+    <properties>
+        <java.version>17</java.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- 三方库版本集中声明, 子模块引用时不写 version -->
+        <mybatis-plus.version>3.5.7</mybatis-plus.version>
+        <hutool.version>5.8.27</hutool.version>
+        <jjwt.version>0.12.6</jjwt.version>
+    </properties>
+
+    <!-- dependencyManagement 只声明版本, 不真正引入依赖 -->
+    <!-- 子模块需要时在 <dependencies> 里声明 groupId+artifactId (不写 version) -->
+    <dependencyManagement>
+        <dependencies>
+            <!-- ========== 内部模块: 版本跟随 project.version ========== -->
+            <dependency>
+                <groupId>com.agentforge</groupId>
+                <artifactId>af-common</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.agentforge</groupId>
+                <artifactId>af-auth-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.agentforge</groupId>
+                <artifactId>af-auth-impl</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.agentforge</groupId>
+                <artifactId>af-session-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.agentforge</groupId>
+                <artifactId>af-session-impl</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.agentforge</groupId>
+                <artifactId>af-agent</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <!-- ========== 三方库版本仲裁 ========== -->
+            <!-- MyBatis-Plus SpringBoot3 专用 starter -->
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
+                <version>${mybatis-plus.version}</version>
+            </dependency>
+            <!-- Hutool 工具集 -->
+            <dependency>
+                <groupId>cn.hutool</groupId>
+                <artifactId>hutool-all</artifactId>
+                <version>${hutool.version}</version>
+            </dependency>
+            <!-- JWT (jjwt 0.12.x API 变化大, 三件套) -->
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-api</artifactId>
+                <version>${jjwt.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-impl</artifactId>
+                <version>${jjwt.version}</version>
+                <scope>runtime</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-jackson</artifactId>
+                <version>${jjwt.version}</version>
+                <scope>runtime</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+</project>

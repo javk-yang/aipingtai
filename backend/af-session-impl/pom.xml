@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.agentforge</groupId>
+        <artifactId>af-parent</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>af-session-impl</artifactId>
+    <name>af-session-impl · 会话实现</name>
+
+    <!--
+        session-impl 需要查用户信息 → 依赖 af-auth-api (接口层), 不依赖 af-auth-impl
+        这是 api/impl 拆分的价值: 跨模块只认接口, 不认实现
+
+        依赖自解释声明: web(SSE)/redis(流式中转)/mybatis-plus(落库)/mysql(运行时驱动)
+        这些经 af-common 传递已有, 但显式声明让依赖关系可读、不靠隐式传递
+    -->
+    <dependencies>
+        <dependency>
+            <groupId>com.agentforge</groupId>
+            <artifactId>af-session-api</artifactId>
+        </dependency>
+        <!-- 跨模块依赖: 只拿 auth 的接口/DTO, 不拿 auth 的 Service 实现 -->
+        <!-- Agent 配置：聊天请求按 agentId 读取已发布智能体运行时配置 -->
+        <dependency>
+            <groupId>com.agentforge</groupId>
+            <artifactId>af-agent</artifactId>
+        </dependency>
+        <!-- SSE 端点需要 web; 流式中继/会话缓存需要 redis -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+        <!-- 消息/会话落库 -->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+</project>

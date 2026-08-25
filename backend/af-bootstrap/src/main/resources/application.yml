@@ -1,0 +1,63 @@
+# ============================================================
+# AgentForge 主配置文件 —— 公共配置 (所有环境共享)
+# 环境差异配置放在 application-{profile}.yml
+# ============================================================
+
+server:
+  port: 8090
+  servlet:
+    context-path: /            # 接口前缀由 Controller 的 /api 统一管理, 不再叠加 context-path(避免双重 /api)
+  tomcat:
+    max-threads: 200            # Tomcat 线程池: Agent 长任务别打满, 后续可调
+    accept-count: 100
+
+spring:
+  # 默认激活 dev 环境, 生产用 --spring.profiles.active=prod 覆盖
+  profiles:
+    active: dev
+  application:
+    name: agentforge
+
+  # Jackson 全局序列化配置
+  jackson:
+    default-property-inclusion: non_null   # null 字段不序列化, 和 R 上的 @JsonInclude 双保险
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+    serialization:
+      write-dates-as-timestamps: false     # 日期序列化为字符串, 不是时间戳数字
+
+  # 文件上传限制: Agent 可能上传知识库文档
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
+
+# 技能包上传专用限制由 SkillPackageService 做解压后总大小和条目数校验
+
+# MyBatis-Plus 全局配置
+mybatis-plus:
+  mapper-locations: classpath*:mapper/**/*.xml  # 扫描所有模块的 Mapper XML
+  type-aliases-package: com.agentforge.**.entity  # 实体类别名扫描
+  configuration:
+    map-underscore-to-camel-case: true   # user_name → userName 自动映射
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl  # 开发期打印 SQL (生产关掉)
+  global-config:
+    banner: false
+    db-config:
+      id-type: auto                      # 主键策略: 数据库自增
+      logic-delete-field: deletedAt      # 软删字段名 (对应 P1 设计)
+      logic-not-delete-value: 'null'     # 未删除时该字段为 null
+      logic-delete-value: 'now()'        # 删除时写入当前时间 (MySQL now())
+
+# 日志: 详细配置见 logback-spring.xml
+logging:
+  level:
+    com.agentforge: debug                # 开发期看自己代码的日志
+    org.springframework: info
+
+# 技能仓库: SKILL.md 文件根目录 (P9, 相对路径基于进程 CWD, 可用环境变量覆盖)
+app:
+  skill:
+    repo-dir: ${SKILL_REPO_DIR:${user.dir}/skill-repo}
+  knowledge:
+    engine-url: ${KNOWLEDGE_ENGINE_URL:http://127.0.0.1:8000}

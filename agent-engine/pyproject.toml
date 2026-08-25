@@ -1,0 +1,25 @@
+[project]
+name = "agentforge-engine"
+version = "0.1.0"
+description = "AgentForge LangGraph agent engine"
+requires-python = ">=3.13"
+dependencies = [
+  "fastapi>=0.116,<1",
+  "uvicorn[standard]>=0.35,<1",
+  "langgraph>=0.6,<1",
+  "langchain-core>=0.3,<1",
+  "pydantic-settings>=2.10,<3",
+  "httpx>=0.28,<1",
+  "jsonschema>=4.25,<5",
+  "mcp>=2,<3",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.4,<9",
+  "pytest-asyncio>=1.1,<2",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+asyncio_mode = "auto"

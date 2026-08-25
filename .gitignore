@@ -1,0 +1,41 @@
+# Local runtime data
+.local-mysql/
+.local-redis/
+dump.rdb
+logs/
+.workbuddy/
+
+# Python caches and environments
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Java / Maven build output
+target/
+*.class
+
+# Node / Vite build output
+node_modules/
+dist/
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+*.local
+
+# OS/editor files
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Generated local screenshots and test artifacts
+*-page-fixed.png
+screenshots/
+
+# Logs and temporary files
+*.log
+*.tmp
