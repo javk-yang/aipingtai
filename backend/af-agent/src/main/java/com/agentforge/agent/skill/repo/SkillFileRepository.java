@@ -26,14 +26,14 @@ import java.util.Map;
  *
  * 安全约束：
  * - 只读白名单：所有读取必须落在 repo-dir 内，拒绝绝对路径与 .. 穿越
- * - 全文 8KB 上限，防止技能内容成为 prompt 注入载体
+ * - 全文 512KB 上限，防止技能内容成为 prompt 注入载体
  * - 文件缺失/损坏返回业务错误，不影响 DB 元数据查询（DB 兼容通道仍在）
  */
 @Component
 public class SkillFileRepository {
 
     private static final Logger log = LoggerFactory.getLogger(SkillFileRepository.class);
-    private static final int MAX_CONTENT_BYTES = 8 * 1024;
+    private static final int MAX_CONTENT_BYTES = 512 * 1024;
 
     private final Path repoRoot;
 

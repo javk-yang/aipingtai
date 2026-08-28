@@ -47,8 +47,9 @@ export const skillsApi = {
   upload: (file: File, onProgress?: (percent: number) => void) => {
     const form = new FormData()
     form.append('file', file)
+    // 不手动设置 Content-Type：交由浏览器/Axios 自动补充带 boundary 的 multipart 头，
+    // 否则 Spring MultipartFile 会因缺少 boundary 解析失败。
     return http.post<SkillUploadResponse>('/skills/upload', form, {
-      headers: { 'Content-Type': 'multipart/form-data' },
       onUploadProgress: (event) => {
         if (event.total) onProgress?.(Math.round((event.loaded / event.total) * 100))
       },

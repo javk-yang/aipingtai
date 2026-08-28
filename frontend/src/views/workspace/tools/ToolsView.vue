@@ -132,8 +132,9 @@ async function saveSkill() {
 async function uploadSkill(file?: File) {
   const selected = file ?? fileInput.value?.files?.[0]
   if (!selected) return
-  if (!selected.name.toLowerCase().endsWith('.skillzip')) {
-    error.value = '请选择 .skillzip 技能包'
+  const lowerName = selected.name.toLowerCase()
+  if (!lowerName.endsWith('.skillzip') && !lowerName.endsWith('.zip')) {
+    error.value = '请选择 .zip 或 .skillzip 技能包'
     return
   }
   try {
@@ -190,7 +191,7 @@ onMounted(load)
           <div class="card-head"><span class="card-icon"><AfIcon name="settings" :size="15" /></span><div class="card-title-wrap"><span class="card-name">{{ t.name }}</span><span class="card-code mono">{{ t.code }}</span></div><span class="card-spacer" /><span :class="['enabled', t.enabled ? 'on' : 'off']"><i />{{ t.enabled ? '已启用' : '已停用' }}</span></div>
           <p class="card-desc">{{ t.description || '暂无描述' }}</p>
           <div class="card-meta"><span class="chip">{{ ExecutorTypeLabels[t.executorType] ?? t.executorType }}</span><span class="chip mono">{{ t.transport }}</span><span class="chip mono">{{ t.timeoutMs }}ms</span></div>
-          <div class="card-actions"><button type="button" @click="editTool(t)"><AfIcon name="edit" :size="12" /> 编辑</button><button type="button" @click="toggleTool(t)">{{ t.enabled ? '停用' : '启用' }}</button><button type="button" class="danger" @click="removeTool(t)"><AfIcon name="trash" :size="12" /> 删除</button></div>
+          <div class="card-actions" aria-label="工具操作"><button type="button" class="action-control" aria-label="编辑工具" @click="editTool(t)"><AfIcon name="edit" :size="13" /><span class="action-label">编辑</span></button><button type="button" class="action-control" :aria-label="t.enabled ? '停用工具' : '启用工具'" @click="toggleTool(t)"><span class="action-dot" /><span class="action-label">{{ t.enabled ? '停用' : '启用' }}</span></button><button type="button" class="action-control danger" aria-label="删除工具" @click="removeTool(t)"><AfIcon name="trash" :size="13" /><span class="action-label">删除</span></button></div>
         </div>
         <p v-if="!tools.length && !loading" class="grid-empty">暂无工具，先创建一个工具连接。</p>
       </div>
@@ -201,9 +202,9 @@ onMounted(load)
         <div><h3 class="section-title">技能库</h3><span class="section-sub">支持手动创建或直接导入技能包</span></div>
         <div class="section-actions">
           <span class="upload-wrap">
-            <input ref="fileInput" class="hidden-file" type="file" accept=".skillzip" @change="uploadSkill()" />
+            <input ref="fileInput" class="hidden-file" type="file" accept=".zip,.skillzip" @change="uploadSkill()" />
             <AfButton size="sm" variant="ghost" :disabled="uploading" @click="fileInput?.click()">
-              <AfIcon name="upload" :size="13" /> {{ uploading ? `导入中 ${uploadProgress}%` : '导入 skillzip' }}
+              <AfIcon name="upload" :size="13" /> {{ uploading ? `导入中 ${uploadProgress}%` : '导入技能包' }}
             </AfButton>
           </span>
           <AfButton size="sm" @click="resetSkill"><AfIcon name="plus" :size="13" /> 新建技能</AfButton>
@@ -214,9 +215,9 @@ onMounted(load)
           <div class="card-head"><span class="card-icon skill"><AfIcon name="spark" :size="15" /></span><div class="card-title-wrap"><span class="card-name">{{ s.name }}</span><span class="card-code mono">{{ s.code }}</span></div><span class="card-spacer" /><span v-if="s.builtin" class="chip">内置</span><span :class="['enabled', s.enabled ? 'on' : 'off']"><i />{{ s.enabled ? '已启用' : '已停用' }}</span></div>
           <p class="card-desc">{{ s.description || '暂无描述' }}</p>
           <div class="card-meta"><span class="chip mono">v{{ s.version }}</span><span v-for="(w, i) in triggerWords(s)" :key="i" class="chip trigger mono">{{ w }}</span></div>
-          <div class="card-actions"><button type="button" @click="editSkill(s)"><AfIcon name="edit" :size="12" /> 编辑</button><button type="button" @click="toggleSkill(s)">{{ s.enabled ? '停用' : '启用' }}</button><button v-if="!s.builtin" type="button" class="danger" @click="removeSkill(s)"><AfIcon name="trash" :size="12" /> 删除</button></div>
+          <div class="card-actions" aria-label="技能操作"><button type="button" class="action-control" aria-label="编辑技能" @click="editSkill(s)"><AfIcon name="edit" :size="13" /><span class="action-label">编辑</span></button><button type="button" class="action-control" :aria-label="s.enabled ? '停用技能' : '启用技能'" @click="toggleSkill(s)"><span class="action-dot" /><span class="action-label">{{ s.enabled ? '停用' : '启用' }}</span></button><button v-if="!s.builtin" type="button" class="action-control danger" aria-label="删除技能" @click="removeSkill(s)"><AfIcon name="trash" :size="13" /><span class="action-label">删除</span></button></div>
         </div>
-        <p v-if="!skills.length && !loading" class="grid-empty">暂无技能，可导入 `.skillzip` 或新建技能。</p>
+        <p v-if="!skills.length && !loading" class="grid-empty">暂无技能，可导入 `.zip` / `.skillzip` 或新建技能。</p>
       </div>
     </section>
     <p v-if="loading" class="tools-loading">加载中…</p>
@@ -277,4 +278,13 @@ onMounted(load)
 }
 .form{display:flex;flex-direction:column;gap:var(--space-3)}.form label{display:flex;flex-direction:column;gap:4px;color:var(--color-text-secondary);font-size:var(--text-sm)}.input{padding:8px 10px;border:1px solid var(--color-border);border-radius:var(--radius-sm);background:var(--color-bg);color:var(--color-text);font:inherit;font-size:var(--text-sm)}.input:focus{outline:none;border-color:var(--color-border-strong)}.input.code{font-family:monospace;font-size:11px;resize:vertical}.input:disabled{opacity:.65}.footer-spacer{flex:1}
 @media (max-width:720px){.tools-page{padding:20px 16px;gap:22px}.tools-hero{display:block}.tools-summary{width:max-content;margin-top:16px}.section-head{align-items:flex-start;flex-direction:column}.section-actions{width:100%;justify-content:flex-end}.grid{grid-template-columns:1fr}.card-title-wrap{display:block}.card-code{display:block;margin-top:2px}}
+/* ---- 能力编目：稳定操作轨与光谱状态 ---- */
+.tools-page { padding: clamp(20px, 3vw, 36px); gap: 30px; }
+.tools-hero { position: relative; padding: 20px; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface-raised); box-shadow: var(--shadow-float); overflow: hidden; }
+.tools-hero::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--color-lifeline); }.tools-title { font-size: clamp(26px, 3vw, 34px); letter-spacing: var(--tracking-tight); }.tools-summary { position: relative; border-radius: 14px; background: var(--color-bg); }
+.section { position: relative; }.section-head { padding: 0 2px; margin-bottom: 14px; }.section-title { font-size: var(--text-lg); }.grid { gap: 14px; }
+.card { position: relative; display: flex; min-height: 218px; padding: 18px; flex-direction: column; overflow: hidden; border-radius: var(--radius-lg); background: var(--color-surface-raised); box-shadow: 0 1px 0 rgba(255,255,255,.35) inset; transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast); }.card::before { content: ''; position: absolute; top: 0; left: 18px; width: 42px; height: 2px; background: var(--color-spectrum-d); }.card.skill::before { background: var(--color-spectrum-e); }.card:hover { transform: translateY(-3px); border-color: var(--color-border-strong); box-shadow: var(--shadow-float); }
+.card-icon { flex-basis: 34px; width: 34px; height: 34px; border-radius: 10px; background: var(--color-icon-bg); }.card-icon.skill { color: var(--color-spectrum-e); }.card-desc { min-height: 42px; margin: 15px 0; }.chip { background: var(--color-bg-elevated); }.enabled { padding: 4px 7px; border-radius: var(--radius-pill); background: var(--color-success-bg); }.enabled.off { background: var(--color-surface-2); }
+.card-actions { display: flex; align-items: center; gap: 7px; padding-top: 14px; margin-top: auto; border-top: 1px solid var(--color-border); }.action-control { display: inline-flex; align-items: center; justify-content: center; gap: 5px; min-height: 30px; padding: 0 9px; border: 1px solid var(--color-border); border-radius: 8px; background: var(--color-surface); color: var(--color-text-secondary); font-family: var(--font-sans); font-size: var(--text-xs); font-weight: var(--weight-medium); line-height: 1; white-space: nowrap; cursor: pointer; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; transition: transform var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast), background var(--transition-fast); }.action-control:hover { transform: translateY(-1px); color: var(--color-text); border-color: var(--color-border-strong); background: var(--color-bg-elevated); }.action-control:active { transform: scale(.97); }.action-control.danger:hover { color: var(--color-danger); border-color: color-mix(in srgb, var(--color-danger) 42%, var(--color-border)); background: var(--color-danger-bg); }.action-label { display: inline-block; font-family: var(--font-sans); line-height: 1; }.action-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+@media (max-width: 720px) { .tools-hero { display: block; }.tools-summary { width: max-content; margin-top: 16px; }.card-actions { gap: 6px; }.action-control { flex: 1; padding: 0 6px; } }
 </style>

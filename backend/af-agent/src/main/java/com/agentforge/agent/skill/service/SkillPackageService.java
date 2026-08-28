@@ -39,7 +39,7 @@ public class SkillPackageService {
     private static final long MAX_PACKAGE_BYTES = 10L * 1024 * 1024;
     private static final long MAX_UNCOMPRESSED_BYTES = 32L * 1024 * 1024;
     private static final int MAX_ENTRIES = 256;
-    private static final int MAX_MANIFEST_BYTES = 8 * 1024;
+    private static final int MAX_MANIFEST_BYTES = 512 * 1024;
     private static final List<String> DANGEROUS_SUFFIXES = List.of(
             ".exe", ".dll", ".so", ".dylib", ".bat", ".cmd", ".ps1", ".sh", ".bash",
             ".jar", ".class", ".pyc", ".wasm"
@@ -118,11 +118,26 @@ public class SkillPackageService {
         if (file == null || file.isEmpty()) {
             throw new BizException(ErrorCode.SKILL_PACKAGE_INVALID, "上传文件不能为空");
         }
-        if (!safeFileName(file).toLowerCase().endsWith(".skillzip")) {
-            throw new BizException(ErrorCode.SKILL_PACKAGE_INVALID, "仅支持 .skillzip 文件");
+        // 兼容常规 .zip 技能包与平台专有的 .skillzip，名称不可信时再用 ZIP 魔数兜底。
+        String fileName = safeFileName(file).toLowerCase();
+        boolean nameOk = fileName.endsWith(".skillzip") || fileName.endsWith(".zip");
+        boolean magicOk = isZipMagic(file);
+        if (!nameOk && !magicOk) {
+            throw new BizException(ErrorCode.SKILL_PACKAGE_INVALID, "仅支持 .zip 或 .skillzip 技能包");
         }
         if (file.getSize() > MAX_PACKAGE_BYTES) {
             throw new BizException(ErrorCode.SKILL_PACKAGE_TOO_LARGE);
+        }
+    }
+
+    /** 通过文件头 PK\x03\x04 兜底校验 ZIP 容器，避免仅靠后缀伪装。 */
+    private boolean isZipMagic(MultipartFile file) {
+        try (InputStream in = file.getInputStream()) {
+            byte[] head = new byte[4];
+            int n = in.read(head);
+            return n == 4 && head[0] == 'P' && head[1] == 'K' && head[2] == 3 && head[3] == 4;
+        } catch (IOException e) {
+            return false;
         }
     }
 
@@ -194,7 +209,7 @@ public class SkillPackageService {
         }
         String name = requiredText(map, "name");
         String description = requiredText(map, "description");
-        String version = requiredText(map, "version");
+        String version = optionalText(map, "version", "1.0.0");
         List<String> allowedTools = readAllowedTools(map.get("allowed_tools"));
         String code = manifestPath.getParent() == null || manifestPath.getParent().equals(extracted)
                 ? slug(name)
@@ -269,6 +284,14 @@ public class SkillPackageService {
         Object value = map.get(key);
         if (value == null || String.valueOf(value).isBlank()) {
             throw new BizException(ErrorCode.SKILL_PACKAGE_INVALID, "SKILL.md 缺少字段: " + key);
+        }
+        return String.valueOf(value).trim();
+    }
+
+    private String optionalText(Map<?, ?> map, String key, String defaultValue) {
+        Object value = map.get(key);
+        if (value == null || String.valueOf(value).isBlank()) {
+            return defaultValue;
         }
         return String.valueOf(value).trim();
     }

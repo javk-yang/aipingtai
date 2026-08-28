@@ -50,13 +50,6 @@
                     <!-- mainClass 指向启动类 -->
                     <mainClass>com.agentforge.Bootstrap</mainClass>
                 </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>repackage</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>
