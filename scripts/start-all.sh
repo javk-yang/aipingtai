@@ -7,7 +7,7 @@
 #   2. Redis   127.0.0.1:6379（.local-redis）
 #   3. Python  Agent 引擎  127.0.0.1:8000（uvicorn）
 #   4. Java    af-bootstrap  127.0.0.1:8090（fat-jar）
-#   5. 前端    Vite dev     127.0.0.1:5173（proxy /api → 8090）
+#   5. 前端    Vite dev     127.0.0.1:5175（proxy /api → 8090）
 #
 # 幂等：已运行的端口自动跳过；日志统一落 logs/ 目录。
 # 用法：bash scripts/start-all.sh [--rebuild-java] [--rebuild-frontend] [--restart-java]
@@ -197,21 +197,21 @@ else
 fi
 
 # 5) 前端 Vite dev
-if port_open 5173; then
-  if http_ready "http://127.0.0.1:5173/"; then
-    echo "[✓] 前端 5173 已在运行"
+if port_open 5175; then
+  if http_ready "http://127.0.0.1:5175/"; then
+    echo "[✓] 前端 5175 已在运行"
   else
-    report_failure "前端 5173（健康检查失败）" "$LOGS_DIR/frontend.log"
+    report_failure "前端 5175（健康检查失败）" "$LOGS_DIR/frontend.log"
   fi
 else
-  echo "[↑] 启动前端 dev（:5173）..."
+  echo "[↑] 启动前端 dev（:5175）..."
   cd "$ROOT/frontend"
-  nohup "$NODE_BIN/npx" vite --host "$BIND_HOST" --port 5173 >"$LOGS_DIR/frontend.log" 2>&1 < /dev/null &
+  nohup "$NODE_BIN/npx" vite --host "$BIND_HOST" --port 5175 >"$LOGS_DIR/frontend.log" 2>&1 < /dev/null &
   frontend_pid=$!
-  if wait_for_http "http://127.0.0.1:5173/" "$frontend_pid"; then
-    echo "[✓] 前端已就绪（http://127.0.0.1:5173/）"
+  if wait_for_http "http://127.0.0.1:5175/" "$frontend_pid"; then
+    echo "[✓] 前端已就绪（http://127.0.0.1:5175/）"
   else
-    report_failure "前端 5173" "$LOGS_DIR/frontend.log"
+    report_failure "前端 5175" "$LOGS_DIR/frontend.log"
   fi
   cd "$ROOT"
 fi
@@ -222,7 +222,7 @@ if [ "$critical_failed" -ne 0 ]; then
 fi
 
 echo "=============================================="
-echo " 全部就绪：前端 http://$LOCAL_IP:5173（本机也可用 http://127.0.0.1:5173）"
+echo " 全部就绪：前端 http://$LOCAL_IP:5175（本机也可用 http://127.0.0.1:5175）"
 echo "=============================================="
 
 # 保活：以 sleep 占据启动任务进程，避免 nohup 子进程在脚本退出后被回收。

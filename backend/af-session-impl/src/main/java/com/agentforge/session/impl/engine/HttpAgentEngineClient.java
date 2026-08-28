@@ -53,7 +53,8 @@ public class HttpAgentEngineClient implements AgentEngineClient {
                                Map<String, Object> agentConfig,
                                Consumer<String> onDelta,
                                Consumer<ToolStreamEvent> onToolEvent,
-                               Consumer<SkillStreamEvent> onSkillEvent) throws Exception {
+                               Consumer<SkillStreamEvent> onSkillEvent,
+                               Consumer<String> onReasoning) throws Exception {
         Map<String, Object> bodyMap = new java.util.LinkedHashMap<>();
         bodyMap.put("prompt", prompt);
         bodyMap.put("conversation_id", conversationId);
@@ -100,6 +101,8 @@ public class HttpAgentEngineClient implements AgentEngineClient {
                         || SkillStreamEvent.TYPE_RESULT.equals(type)
                         || SkillStreamEvent.TYPE_ERROR.equals(type)) {
                     onSkillEvent.accept(parseSkillEvent(type, data));
+                } else if ("reasoning".equals(type)) {
+                    onReasoning.accept(data.path("content").asText(""));
                 } else if ("message_done".equals(type)) {
                     model = data.path("model").asText(model);
                     tokenInput = data.path("token_input").asInt(0);

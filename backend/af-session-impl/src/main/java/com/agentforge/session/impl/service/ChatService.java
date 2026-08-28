@@ -206,7 +206,17 @@ public class ChatService {
                 }, toolEvent -> handleToolEvent(
                         toolEvent, tenantId, assistant.getId(), assistant.getSeq(), emitter),
                 skillEvent -> handleSkillEvent(
-                        skillEvent, tenantId, assistant.getId(), assistant.getSeq(), emitter));
+                        skillEvent, tenantId, assistant.getId(), assistant.getSeq(), emitter),
+                reasoning -> {
+                    try {
+                        emitter.send(SseEmitter.event()
+                                .name(ChatStreamEvent.TYPE_REASONING)
+                                .id(String.valueOf(assistant.getSeq()))
+                                .data(eventData("content", reasoning, "traceId", streamTraceId)));
+                    } catch (IOException e) {
+                        throw new RuntimeException("sse reasoning send failed", e);
+                    }
+                });
 
                 // 完成: final flush + status=1
                 String finalContent;
@@ -240,6 +250,7 @@ public class ChatService {
                         .data(eventData("model", streamResult.model(),
                                 "tokenInput", streamResult.tokenInput(),
                                 "tokenOutput", streamResult.tokenOutput(),
+                                "conversationId", streamConvId,
                                 "traceId", streamTraceId)));
                 emitter.complete();
             } catch (Exception e) {
@@ -252,11 +263,20 @@ public class ChatService {
                 auditService.record("chat.message.complete", "message",
                         String.valueOf(assistant.getId()), failureAudit,
                         0);   // P13 审计: 失败留痕
+                // 把底层真实错误摘要透传给用户，避免永远只报"生成失败"
+                String errorMessage = e.getMessage();
+                if (errorMessage == null || errorMessage.isBlank()) {
+                    errorMessage = "生成失败，请稍后重试";
+                }
+                // 避免堆栈/过长信息吓到用户，最长保留 256 字符
+                if (errorMessage.length() > 256) {
+                    errorMessage = errorMessage.substring(0, 256);
+                }
                 try {
                     emitter.send(SseEmitter.event()
                             .name(ChatStreamEvent.TYPE_ERROR)
                             .data(eventData("code", 3303,
-                                    "message", "生成失败，请稍后重试",
+                                    "message", errorMessage,
                                     "traceId", streamTraceId)));
                 } catch (Exception ignored) {}
                 emitter.completeWithError(e);

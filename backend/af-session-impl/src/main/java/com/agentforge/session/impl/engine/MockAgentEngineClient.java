@@ -32,7 +32,8 @@ public class MockAgentEngineClient implements AgentEngineClient {
                                Map<String, Object> agentConfig,
                                Consumer<String> onDelta,
                                Consumer<ToolStreamEvent> onToolEvent,
-                               Consumer<SkillStreamEvent> onSkillEvent) throws Exception {
+                               Consumer<SkillStreamEvent> onSkillEvent,
+                               Consumer<String> onReasoning) throws Exception {
         String reply = buildReply(prompt);
         // 按换行/句号切分, 逐段推送, 模拟打字机效果
         for (String chunk : reply.split("(?<=\\n)|(?<=[。！？])")) {

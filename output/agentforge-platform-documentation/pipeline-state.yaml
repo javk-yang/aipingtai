@@ -1,0 +1,57 @@
+current_stage: 3
+security:
+  secrets_redacted: true
+  notes:
+    - Real API keys, GitHub token, refresh token and production JWT secret are not included.
+stage_1:
+  status: completed
+  executor: doc-writer
+  expert_used: tech-blog-expert
+  route_tag: expert_tech_blog
+  genre: project-docs
+  output_path: stage1/final_draft.md
+  fallback: false
+stage_2:
+  status: completed
+  completed_at: 2026-08-24T18:19:20+08:00
+  executor: doc-formatter
+  route: html
+  html_sub: template
+  genre: business-report
+  output_path: stage2/formatted-agentforge-platform.html
+  output_format: html
+  template_used: business-report
+  design_tokens_path: stage2/design_tokens.json
+  skills_invoked:
+    - design-token
+    - doc-typeset
+    - html-review
+  html_review_attempts: 1
+  review_initial_score: 70
+  review_initial_passed: false
+  fallback: false
+  notes:
+    - Applied one directed typesetting correction for spacing variables, table semantics and heading rhythm.
+    - Post-correction structural checks passed; no security issues were found.
+stage_3:
+  status: completed
+  completed_at: 2026-08-25T15:58:45+08:00
+  executor: doc-converter
+  input_format: html
+  input_path: stage2/formatted-agentforge-platform.html
+  output_path: stage3/output.docx
+  output_format: docx
+  skill_used:
+    - html-to-docx
+  present_files_opened: true
+  fallback: false
+  fallback_reason: null
+consistency_check:
+  status: passed
+  checks:
+    - stage1_output_exists
+    - stage2_html_exists
+    - stage3_docx_exists
+    - secrets_redacted
+    - html_structural_checks_passed
+    - docx_conversion_successful

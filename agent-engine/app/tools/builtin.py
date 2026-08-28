@@ -144,10 +144,10 @@ async def knowledge_search(arguments: dict[str, Any]) -> dict[str, Any]:
     doc_ids = arguments.get("doc_ids")
     if not isinstance(doc_ids, list):
         doc_ids = None
+    # 空列表与 None 同义：不额外限制文档范围
     if doc_ids == []:
-        results = []
-    else:
-        results = get_store().search(query, top_k, doc_ids=doc_ids)
+        doc_ids = None
+    results = get_store().search(query, top_k, doc_ids=doc_ids)
     return {
         "query": query,
         "count": len(results),

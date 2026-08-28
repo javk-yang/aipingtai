@@ -59,6 +59,14 @@ class DeterministicModel:
             + (f"\n\n已应用 Agent 系统指令：{system_hint}" if system_hint else "")
         )
 
+    def build_reply_with_reasoning(
+        self, prompt: str, skill: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
+        # 确定性模型无隐藏思维链，reasoning 恒为空，仅返回自然语言回复。
+        # 返回值结构与 OpenAICompatibleModel.build_reply_with_reasoning 对齐，
+        # 避免 agent_graph 在普通回复分支统一调用时因缺少该方法而崩溃。
+        return {"content": self.build_reply(prompt, skill), "reasoning": ""}
+
     @staticmethod
     def _latest_user_prompt(content: str) -> str:
         value = str(content or "").strip()

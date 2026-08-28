@@ -86,8 +86,17 @@ def _safe_error_summary(exc: Exception) -> str:
         return "无法连接上游模型"
     if isinstance(exc, httpx.HTTPStatusError):
         status = exc.response.status_code
+        try:
+            body = exc.response.json() or {}
+            upstream_msg = body.get("error", {}).get("message") or body.get("message") or ""
+        except Exception:
+            upstream_msg = ""
         if status == 401:
             return "上游模型认证失败"
+        if status == 402:
+            if "Insufficient Balance" in upstream_msg or "余额" in upstream_msg:
+                return "上游模型余额不足，请充值或更换 API Key"
+            return "上游模型需要付费或余额不足"
         if status == 403:
             return "上游模型访问被拒绝"
         if status == 404:
@@ -317,6 +326,41 @@ class OpenAICompatibleModel:
             data = self._chat(messages)
             content = self._message(data).get("content")
             return self._safe_natural_reply(prompt, content)
+        except Exception as exc:
+            raise _model_call_error("生成回复失败", exc) from exc
+
+    def build_reply_with_reasoning(self, prompt: str, skill: dict[str, Any] | None = None) -> dict[str, Any]:
+        """普通对话：调用真实 LLM，返回 {content, reasoning}。
+
+        reasoning 为模型真实思维链（reasoning_content / reasoning / thinking 等字段），
+        无思维链能力时返回空串。用于前端"显示隐藏思维链"。
+        """
+        messages = [{"role": "user", "content": prompt}]
+        if skill:
+            name = str(skill.get("name", ""))
+            markdown = str(skill.get("markdown", ""))
+            messages.insert(
+                0,
+                {
+                    "role": "system",
+                    "content": f"你是 AgentForge 平台助手，正在按技能「{name}」处理请求。"
+                    f"技能指令如下：\n{markdown}",
+                },
+            )
+        try:
+            data = self._chat(messages)
+            message = self._message(data)
+            content = message.get("content")
+            reasoning = (
+                message.get("reasoning_content")
+                or message.get("reasoning")
+                or message.get("thinking")
+                or ""
+            )
+            if reasoning:
+                import logging
+                logging.getLogger(__name__).info("model reasoning length=%d", len(reasoning))
+            return {"content": self._safe_natural_reply(prompt, content), "reasoning": reasoning}
         except Exception as exc:
             raise _model_call_error("生成回复失败", exc) from exc
 

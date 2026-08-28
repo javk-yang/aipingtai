@@ -1,0 +1,23 @@
+{
+  "theme_name": "business-modern",
+  "genre": "business-report",
+  "tokens": {
+    "typography": {
+      "fontFamily": {"heading": "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif", "body": "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif", "mono": "'SFMono-Regular', Consolas, 'Liberation Mono', monospace"},
+      "fontSize": {"cover": "32px", "h1": "23px", "h2": "18px", "h3": "14px", "body": "10.5px", "small": "9px"},
+      "lineHeight": {"body": "1.75", "heading": "1.3", "code": "1.55"}
+    },
+    "color": {"primary": "#243b53", "accent": "#2f6f9f", "text": "#1f2933", "muted": "#627d98", "border": "#d9e2ec", "surface": "#f7f9fb", "callout": "#eef5fb", "success": "#2f855a", "warning": "#b7791f"},
+    "spacing": {"page": "2.54cm", "section": "22px", "paragraph": "8px", "card": "14px", "table": "6px"},
+    "layout": {"contentWidth": "15.6cm"}
+  },
+  "css_variables": {
+    "--ff-heading": "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif",
+    "--ff-body": "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif",
+    "--ff-mono": "'SFMono-Regular', Consolas, 'Liberation Mono', monospace",
+    "--fs-cover": "32px", "--fs-h1": "23px", "--fs-h2": "18px", "--fs-h3": "14px", "--fs-body": "10.5px", "--fs-small": "9px",
+    "--lh-body": "1.75", "--lh-heading": "1.3", "--lh-code": "1.55",
+    "--color-primary": "#243b53", "--color-accent": "#2f6f9f", "--color-text": "#1f2933", "--color-muted": "#627d98", "--color-border": "#d9e2ec", "--color-surface": "#f7f9fb", "--color-callout": "#eef5fb", "--color-success": "#2f855a", "--color-warning": "#b7791f",
+    "--spacing-page": "2.54cm", "--spacing-section": "22px", "--spacing-paragraph": "8px", "--spacing-card": "14px", "--spacing-table": "6px", "--page-content-width": "15.6cm"
+  }
+}

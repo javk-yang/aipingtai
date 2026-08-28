@@ -1,0 +1,1745 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="docx-page-size" content="A4">
+<title>AgentForge 企业级 AI Agent 平台</title>
+<style>
+@page {
+  @bottom-center { content: counter(page); }
+}
+@page cover {
+  @bottom-center { content: none; }
+}
+:root {
+  --ff-heading: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --ff-body: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --ff-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --fs-cover: 32px;
+  --fs-h1: 23px;
+  --fs-h2: 18px;
+  --fs-h3: 14px;
+  --fs-h4: 12px;
+  --fs-body: 10.5px;
+  --fs-small: 9px;
+  --lh-body: 1.75;
+  --lh-heading: 1.3;
+  --lh-code: 1.55;
+  --fw-regular: 400;
+  --fw-bold: 700;
+  --color-primary: #243b53;
+  --color-accent: #2f6f9f;
+  --color-text: #1f2933;
+  --color-muted: #627d98;
+  --color-border: #d9e2ec;
+  --color-bg: #ffffff;
+  --color-surface: #f7f9fb;
+  --color-callout: #eef5fb;
+  --color-success: #2f855a;
+  --color-warning: #b7791f;
+  --color-danger: #b83227;
+  --color-code: #f4f7fa;
+  --spacing-page: 2.54cm;
+  --spacing-section: 22px;
+  --spacing-paragraph: 8px;
+  --spacing-card: 14px;
+  --spacing-table: 6px;
+  --spacing-list-indent: 1.6em;
+  --border-thin: 1px;
+  --border-accent: 4px;
+  --radius-card: 6px;
+  --page-content-width: 15.6cm;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; background: var(--color-bg); color: var(--color-text); }
+body { max-width: var(--page-content-width); margin-left: auto; margin-right: auto; font-family: var(--ff-body); font-size: var(--fs-body); line-height: var(--lh-body); }
+section[role="cover"] { page: cover; min-height: 24cm; padding: var(--spacing-page); background: var(--color-primary); color: var(--color-bg); }
+.cover-eyebrow, .cover-title, .cover-subtitle, .cover-meta, .cover-note { text-align: center; }
+.cover-eyebrow { margin: 2cm 0 var(--spacing-section); font-family: var(--ff-heading); font-size: var(--fs-small); letter-spacing: 0.18em; color: var(--color-callout); }
+.cover-title { margin: 2cm 0 var(--spacing-paragraph); font-family: var(--ff-heading); font-size: var(--fs-cover); line-height: var(--lh-heading); font-weight: var(--fw-bold); color: var(--color-bg); }
+.cover-subtitle { margin: 0 0 var(--spacing-section); font-family: var(--ff-heading); font-size: var(--fs-h2); line-height: var(--lh-heading); color: var(--color-callout); }
+.cover-meta { margin: 2cm 0 var(--spacing-paragraph); font-size: var(--fs-small); color: var(--color-callout); }
+.cover-note { margin-top: 3cm; font-size: var(--fs-small); color: var(--color-callout); }
+.doc-toc { padding: var(--spacing-section) var(--spacing-page); border-bottom: var(--border-thin) solid var(--color-border); }
+.doc-toc h2, .doc-toc p { font-family: var(--ff-heading); font-size: var(--fs-h2); color: var(--color-primary); }
+.doc-toc ol { padding-left: var(--spacing-list-indent); margin: var(--spacing-paragraph) 0 0; padding-left: var(--spacing-list-indent); }
+.doc-toc li { margin-bottom: var(--spacing-table); }
+.doc-toc a { color: var(--color-accent); text-decoration: none; }
+.executive-summary { margin: var(--spacing-section) var(--spacing-page); padding: var(--spacing-card); border-left: var(--border-accent) solid var(--color-accent); background: var(--color-callout); }
+.executive-summary h2 { margin: 0 0 var(--spacing-paragraph); font-family: var(--ff-heading); font-size: var(--fs-h2); color: var(--color-primary); }
+.summary-badge { margin-left: var(--spacing-table); font-size: var(--fs-small); color: var(--color-muted); }
+.summary-text { margin: 0; }
+.metrics { width: 100%; margin: 0 0 var(--spacing-paragraph); border-collapse: collapse; }
+.metrics td { width: 20%; padding: var(--spacing-table); border: var(--border-thin) solid var(--color-border); text-align: center; vertical-align: top; }
+.metric-value, .metric-label { display: block; text-align: center; }
+.metric-value { font-family: var(--ff-heading); font-size: var(--fs-h2); font-weight: var(--fw-bold); color: var(--color-primary); }
+.metric-label { margin-top: var(--spacing-table); font-size: var(--fs-small); color: var(--color-muted); }
+section[role="body"] { padding: var(--spacing-section) var(--spacing-page); }
+section[role="body"] h2 { margin: var(--spacing-section) 0 var(--spacing-paragraph); padding-bottom: var(--spacing-table); border-bottom: var(--border-thin) solid var(--color-border); font-family: var(--ff-heading); font-size: var(--fs-h2); line-height: var(--lh-heading); color: var(--color-primary); }
+section[role="body"] h3 { margin: var(--spacing-section) 0 var(--spacing-paragraph); font-family: var(--ff-heading); font-size: var(--fs-h3); line-height: var(--lh-heading); color: var(--color-accent); }
+.heading-lead { margin: 0 0 var(--spacing-paragraph); color: var(--color-muted); }
+section[role="body"] h4 { margin: var(--spacing-paragraph) 0 var(--spacing-table); font-family: var(--ff-heading); font-size: var(--fs-h4); line-height: var(--lh-heading); color: var(--color-primary); }
+section[role="body"] p { margin: 0 0 var(--spacing-paragraph); }
+section[role="body"] ul, section[role="body"] ol { margin: 0 0 var(--spacing-paragraph); padding-left: var(--spacing-list-indent); }
+section[role="body"] li { margin-bottom: var(--spacing-table); }
+section[role="body"] blockquote { margin: var(--spacing-paragraph) 0; padding: var(--spacing-table) var(--spacing-card); border-left: var(--border-accent) solid var(--color-accent); background: var(--color-callout); color: var(--color-muted); }
+section[role="body"] table { width: 100%; margin: var(--spacing-paragraph) 0 var(--spacing-section); border-collapse: collapse; font-size: var(--fs-small); }
+section[role="body"] th, section[role="body"] td { padding: var(--spacing-table); border: var(--border-thin) solid var(--color-border); vertical-align: top; text-align: left; }
+section[role="body"] th { background: var(--color-surface); color: var(--color-primary); font-weight: var(--fw-bold); }
+.code-block { margin: var(--spacing-paragraph) 0 var(--spacing-section); padding: var(--spacing-card); overflow-wrap: anywhere; background: var(--color-code); border: var(--border-thin) solid var(--color-border); font-family: var(--ff-mono); font-size: var(--fs-small); line-height: var(--lh-code); white-space: pre-wrap; }
+code { font-family: var(--ff-mono); font-size: var(--fs-small); }
+section[role="body"] hr { margin: var(--spacing-section) 0; border: 0; border-top: var(--border-thin) solid var(--color-border); }
+.security-note { margin-top: var(--spacing-section); padding: var(--spacing-card); border-left: var(--border-accent) solid var(--color-warning); background: var(--color-surface); }
+.security-note p { margin: 0; font-size: var(--fs-small); color: var(--color-muted); }
+</style>
+</head>
+<body>
+<section role="cover">
+  <p class="cover-eyebrow">AGENTFORGE · PROJECT DOCUMENTATION</p>
+  <h1 class="cover-title">AgentForge 企业级 AI Agent 平台</h1>
+  <p class="cover-subtitle">项目全貌、架构设计、实现细节、测试验收与问题修复总结</p>
+  <p class="cover-meta">文档版本：v1.0　｜　整理时间：2026-08-24</p>
+  <p class="cover-meta">代码仓库：github.com/javk-yang/aipingtai</p>
+  <p class="cover-note">面向项目负责人、架构师、后端 / 前端 / AI 工程师、测试与运维人员的完整交付说明</p>
+</section>
+<section role="body" data-page-restart="1">
+  <nav class="doc-toc" aria-label="文档目录"><p>目录</p><ol><li><a href="#1-文档摘要">1. 文档摘要</a></li>
+<li><a href="#2-项目背景与建设目标">2. 项目背景与建设目标</a></li>
+<li><a href="#3-功能全景">3. 功能全景</a></li>
+<li><a href="#4-总体架构">4. 总体架构</a></li>
+<li><a href="#5-技术选型与工程结构">5. 技术选型与工程结构</a></li>
+<li><a href="#6-一次聊天请求的完整链路">6. 一次聊天请求的完整链路</a></li>
+<li><a href="#7-认证-token-与权限体系">7. 认证、Token 与权限体系</a></li>
+<li><a href="#8-多模型接入与真实模型调用">8. 多模型接入与真实模型调用</a></li>
+<li><a href="#9-agent-智能体系统">9. Agent 智能体系统</a></li>
+<li><a href="#10-mcp-工具体系">10. MCP 工具体系</a></li>
+<li><a href="#11-skill-技能系统与-skillzip-导入">11. Skill 技能系统与 .skillzip 导入</a></li>
+<li><a href="#12-代码执行沙箱">12. 代码执行沙箱</a></li>
+<li><a href="#13-rag-知识库">13. RAG 知识库</a></li>
+<li><a href="#14-数据库与-redis-设计">14. 数据库与 Redis 设计</a></li>
+<li><a href="#15-前端工作台实现">15. 前端工作台实现</a></li>
+<li><a href="#16-可观测性-审计与用量">16. 可观测性、审计与用量</a></li>
+<li><a href="#17-关键问题-根因与修复记录">17. 关键问题、根因与修复记录</a></li>
+<li><a href="#18-测试与验收">18. 测试与验收</a></li>
+<li><a href="#19-本地启动与运维">19. 本地启动与运维</a></li>
+<li><a href="#20-github-发布与仓库安全">20. GitHub 发布与仓库安全</a></li>
+<li><a href="#21-当前已知限制与生产化差距">21. 当前已知限制与生产化差距</a></li>
+<li><a href="#22-后续路线图">22. 后续路线图</a></li>
+<li><a href="#23-交付验收清单">23. 交付验收清单</a></li>
+<li><a href="#24-结语">24. 结语</a></li>
+<li><a href="#附录-a-核心文件索引">附录 A：核心文件索引</a></li>
+<li><a href="#附录-b-敏感信息替换规范">附录 B：敏感信息替换规范</a></li></ol></nav>
+  <div class="executive-summary">
+    <h2>执行摘要 <span class="summary-badge">Executive Summary</span></h2>
+    <table class="metrics"><thead><tr><th>本地运行端</th><th>稳定性巡检</th><th>检查通过</th><th>巡检失败</th><th>文档章节</th></tr></thead><tbody><tr><td><span class="metric-value">5</span></td><td><span class="metric-value">30 分钟</span></td><td><span class="metric-value">353</span></td><td><span class="metric-value">0</span></td><td><span class="metric-value">24</span></td></tr></tbody></table>
+    <p class="summary-text">本文将 AgentForge 定位为一个可本地运行、可审计、可扩展的企业级 AI Agent 平台。文档完整覆盖五端架构、聊天链路、双 Token 认证、多模型接入、Agent 生命周期、MCP 工具、Skill 技能、代码沙箱、RAG 知识库、前端工作台、可观测性、问题修复、测试验收、启动运维和后续生产化路线。</p>
+    <div class="security-note"><p><strong>安全说明：</strong>本文不包含真实 API Key、GitHub Token、refresh token、JWT 生产密钥或其他凭据。示例中的敏感配置统一使用占位符。</p></div>
+  </div>
+<h2 id="1-文档摘要">1. 文档摘要</h2>
+<p class="heading-lead">本节围绕该主题说明平台的设计、实现与验收要点。</p><h3 id="1-1-一句话介绍">1.1 一句话介绍</h3>
+<p>AgentForge 是一个面向企业内部私有部署的 AI Agent 智能体平台：通过 Vue 工作台完成模型、Agent、工具、技能和知识库治理，通过 Java 业务层统一承接认证、权限、会话、审计、用量与数据落库，通过 Python LangGraph 引擎执行模型路由、工具调用、技能注入和知识库增强，最终以 SSE/NDJSON 方式向用户提供可审计的流式回答。</p>
+<h3 id="1-2-项目当前结论">1.2 项目当前结论</h3>
+<p>截至本次整理，平台已形成可运行的五端本地闭环：</p>
+<ul>
+<li>MySQL：业务数据与治理数据存储。</li>
+<li>Redis：验证码、限流、刷新令牌、配额预检、缓存和运行时支撑。</li>
+<li>Python Agent Engine：FastAPI + LangGraph 智能编排与工具/技能执行。</li>
+<li>Java Backend：Spring Boot 模块化单体，统一 API、认证、权限、会话、SSE 中继和审计。</li>
+<li>Vue Frontend：Vue 3 + TypeScript + Vite 工作台。</li>
+</ul>
+<p>已完成的核心能力包括：</p>
+<ol>
+<li>登录、注册、找回密码、JWT 双 Token 与并发刷新队列。</li>
+<li>会话创建、编辑、删除、批量删除和一键清空。</li>
+<li>多模型配置与请求级模型选择，支持 deterministic、OpenAI、OpenAI-compatible、DeepSeek、Qwen、Ollama。</li>
+<li>Agent 创建、编辑、发布、启停、删除、会话级复用与运行时资源白名单。</li>
+<li>LangGraph 显式状态图、工具调用、技能调用、知识库检索和过程事件。</li>
+<li>MCP 工具注册中心、Python 工具网关、内置计算器、当前时间、单位换算和代码执行沙箱。</li>
+<li>SKILL.md 技能体系和 <code>.skillzip</code> 安全导入。</li>
+<li>RAG 知识库的文档分块、检索和来源溯源。</li>
+<li>安全过程可视化：展示摘要、行动、工具、技能、知识库和生成阶段，但不展示隐藏逐字 Chain-of-Thought。</li>
+<li>审计日志、Token 用量、配额预检和可观测看板。</li>
+<li>一键启动、健康检查、冒烟测试、全量回归和稳定性巡检。</li>
+<li>源码已提交到 GitHub 目标仓库。</li>
+</ol>
+<h3 id="1-3-验证摘要">1.3 验证摘要</h3>
+<p>已记录并执行的关键验证结果：</p>
+<table>
+<thead>
+<tr>
+<th>验证项</th>
+<th>结果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Python 引擎测试</td>
+<td>生产加固阶段记录为 <code>35 passed, 1 warning</code>；此前完整工具/技能回归达到 <code>21 passed</code> 等分组结果</td>
+</tr>
+<tr>
+<td>Java Maven 构建</td>
+<td><code>BUILD SUCCESS</code></td>
+</tr>
+<tr>
+<td>Vue 类型检查</td>
+<td><code>vue-tsc --noEmit</code> 通过</td>
+</tr>
+<tr>
+<td>Vue 生产构建</td>
+<td><code>vite build</code> 通过</td>
+</tr>
+<tr>
+<td>30 分钟稳定性巡检</td>
+<td>35 轮、353 个检查通过、0 个失败</td>
+</tr>
+<tr>
+<td>工具调用</td>
+<td>calculator、get_current_time、code_exec 通过</td>
+</tr>
+<tr>
+<td>技能调用</td>
+<td>unit_converter、text_polish 等路径通过</td>
+</tr>
+<tr>
+<td>知识库检索</td>
+<td>命中、分数与溯源返回通过</td>
+</tr>
+<tr>
+<td>GitHub 发布</td>
+<td>本地 <code>main</code> 与远程 <code>origin/main</code> 已同步</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="2-项目背景与建设目标">2. 项目背景与建设目标</h2>
+<p class="heading-lead">本节围绕该主题说明平台的设计、实现与验收要点。</p><h3 id="2-1-建设背景">2.1 建设背景</h3>
+<p>企业在使用大模型时，通常会遇到以下问题：</p>
+<ul>
+<li>模型供应商多，API 协议、模型名称、鉴权方式和错误码不统一。</li>
+<li>直接把模型调用写进业务接口，长耗时请求会占满 Web 线程。</li>
+<li>工具调用、技能能力和知识库能力难以统一治理。</li>
+<li>Agent 的系统提示词、模型、工具权限和知识范围容易失控。</li>
+<li>流式输出中会泄漏原始工具协议、内部参数或不可读的错误堆栈。</li>
+<li>多轮会话历史被错误协议污染后，模型可能反复复述旧 JSON。</li>
+<li>缺少审计和用量数据，无法判断谁调用了什么、消耗了多少 Token、发生了什么异常。</li>
+<li>技能包如果直接解压，存在路径穿越、危险文件落盘、资源耗尽和跨租户污染风险。</li>
+</ul>
+<p>AgentForge 的目标不是训练模型，而是建设一个企业内部可控的模型应用运行平台，把模型、智能体、工具、技能、知识、权限和审计组织成一个闭环。</p>
+<h3 id="2-2-建设目标">2.2 建设目标</h3>
+<p class="heading-lead">本节围绕该主题说明平台的设计、实现与验收要点。</p><h4 id="业务目标">业务目标</h4>
+<ul>
+<li>提供统一的 AI Agent 工作台。</li>
+<li>允许管理员配置多个模型，并在会话中明确选择实际模型。</li>
+<li>允许创建可复用的 Agent，并将 Agent 与模型、工具、技能、知识库绑定。</li>
+<li>让普通用户以对话方式使用平台能力。</li>
+<li>让管理人员可以查看用量、审计和运行异常。</li>
+</ul>
+<h4 id="技术目标">技术目标</h4>
+<ul>
+<li>Java 业务层与 Python 智能层独立进程部署。</li>
+<li>业务数据由 Java 单一写入口维护。</li>
+<li>Python 引擎无状态化，运行状态通过 checkpoint 或运行时结构管理。</li>
+<li>流式事件在 Python、Java、Vue 之间保持统一契约。</li>
+<li>工具和技能均支持权限约束、执行审计和失败降级。</li>
+<li>所有真实模型失败都应可解释，不能伪装成模型成功回答。</li>
+</ul>
+<h4 id="安全目标">安全目标</h4>
+<ul>
+<li>access token 仅保存在前端内存，refresh token 用于会话恢复。</li>
+<li>API Key 脱敏值不能发送给上游模型。</li>
+<li>Agent 只能使用绑定的工具、技能和知识文档。</li>
+<li>技能只收窄工具权限，不能扩大权限。</li>
+<li>技能包解压前后均进行安全校验。</li>
+<li>不向用户展示隐藏逐字思维链、原始工具 JSON、内部系统提示词和异常堆栈。</li>
+</ul>
+<h3 id="2-3-明确不做的事情">2.3 明确不做的事情</h3>
+<ul>
+<li>不做基础模型训练、微调或模型权重管理。</li>
+<li>不把平台建设成通用 IDE。</li>
+<li>不把代码执行沙箱当作任意服务器命令执行器。</li>
+<li>v1 不追求完整的多租户 SaaS 运营体系，但数据结构预留 <code>tenant_id</code>。</li>
+<li>不允许 Python 引擎直接写 MySQL 业务数据。</li>
+<li>不把“展示思考过程”实现为泄漏隐藏 Chain-of-Thought，而是展示安全摘要和可审计事件。</li>
+</ul>
+<hr>
+<h2 id="3-功能全景">3. 功能全景</h2>
+<p class="heading-lead">本节围绕该主题说明平台的设计、实现与验收要点。</p><h3 id="3-1-用户侧能力">3.1 用户侧能力</h3>
+<ul>
+<li>登录、退出、注册、找回密码。</li>
+<li>用户名、邮箱或手机号统一作为 <code>identifier</code> 登录。</li>
+<li>工作台查看会话列表和历史消息。</li>
+<li>选择 Agent 与模型进行对话。</li>
+<li>实时接收文本增量、工具、技能、知识检索和完成事件。</li>
+<li>取消或中断长时间生成。</li>
+<li>查看可读的过程时间线。</li>
+<li>批量删除或一键清空历史会话。</li>
+</ul>
+<h3 id="3-2-管理侧能力">3.2 管理侧能力</h3>
+<ul>
+<li>模型配置：新增、编辑、删除、连接测试、设置默认模型、启停。</li>
+<li>Agent 管理：创建、编辑、发布、停用、删除、运行时查看。</li>
+<li>工具管理：注册、编辑、启停、删除、MCP Server 管理。</li>
+<li>技能管理：手动创建、编辑、启停、删除、上传 <code>.skillzip</code>。</li>
+<li>知识库管理：新增、编辑、重索引、检索、查看详情、删除。</li>
+<li>可观测性：Token 用量、7 日趋势、配额、审计日志。</li>
+</ul>
+<h3 id="3-3-ai-能力层">3.3 AI 能力层</h3>
+<ul>
+<li>deterministic 离线确定性模型。</li>
+<li>OpenAI-compatible HTTP API。</li>
+<li>DeepSeek、Qwen、Ollama 等兼容 Provider。</li>
+<li>LangGraph 状态机编排。</li>
+<li>内置 calculator 工具。</li>
+<li>内置 get_current_time 工具。</li>
+<li>内置 unit_converter 技能/工具。</li>
+<li>code_exec 代码执行沙箱。</li>
+<li>知识库检索工具。</li>
+<li>SKILL.md 提示词技能注入。</li>
+<li>工具和技能的 SSE 事件与 MySQL 双轨审计。</li>
+</ul>
+<hr>
+<h2 id="4-总体架构">4. 总体架构</h2>
+<p class="heading-lead">本节围绕该主题说明平台的设计、实现与验收要点。</p><h3 id="4-1-五层架构">4.1 五层架构</h3>
+<pre><code class="language-text">┌─────────────────────────────────────────────────────────────┐
+│ 接入层：Vue 3 工作台、路由守卫、请求层、SSE 消费、过程可视化       │
+├─────────────────────────────────────────────────────────────┤
+│ 业务层：Spring Boot 3、认证 RBAC、会话消息、Agent/工具/技能管理    │
+├─────────────────────────────────────────────────────────────┤
+│ 智能层：Python FastAPI、LangGraph、模型工厂、上下文与路由          │
+├─────────────────────────────────────────────────────────────┤
+│ 能力层：MCP 工具、内置工具、SKILL.md 技能、代码执行沙箱、RAG      │
+├─────────────────────────────────────────────────────────────┤
+│ 数据层：MySQL 业务库、Redis 缓存与配额、PostgreSQL/本地向量降级    │
+└─────────────────────────────────────────────────────────────┘
+</code></pre>
+<h3 id="4-2-本地运行拓扑">4.2 本地运行拓扑</h3>
+<pre><code class="language-text">浏览器
+  │ http://127.0.0.1:5173
+  ▼
+Vue 3 + Vite 前端
+  │ /api 代理
+  ▼
+Java Spring Boot 8090
+  ├── MySQL 127.0.0.1:3308
+  ├── Redis 127.0.0.1:6379
+  └── Python Agent Engine 127.0.0.1:8000
+          ├── LangGraph
+          ├── OpenAI-compatible 上游模型
+          ├── Tool Gateway / MCP
+          ├── Skill Engine
+          ├── Knowledge Store
+          └── Sandbox Executor
+</code></pre>
+<h3 id="4-3-五端端口">4.3 五端端口</h3>
+<table>
+<thead>
+<tr>
+<th>服务</th>
+<th>地址</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MySQL</td>
+<td><code>127.0.0.1:3308</code></td>
+<td>用户、会话、消息、Agent、工具、技能、审计、用量、模型配置</td>
+</tr>
+<tr>
+<td>Redis</td>
+<td><code>127.0.0.1:6379</code></td>
+<td>Token、验证码、限流、缓存、配额、运行时支撑</td>
+</tr>
+<tr>
+<td>Python</td>
+<td><code>127.0.0.1:8000</code></td>
+<td>Agent 编排、模型调用、工具/技能/知识库执行</td>
+</tr>
+<tr>
+<td>Java</td>
+<td><code>127.0.0.1:8090</code></td>
+<td>对外 API、鉴权、SSE 中继、业务落库</td>
+</tr>
+<tr>
+<td>Vue</td>
+<td><code>127.0.0.1:5173</code></td>
+<td>管理工作台与聊天界面</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>早期开发阶段 Java 曾使用 8080，后因本机其他项目占用改为 8090；当前启动脚本、Vite 代理、Python 内部调用和验证脚本均以 8090 为准。</p>
+</blockquote>
+<h3 id="4-4-为什么-python-智能层独立">4.4 为什么 Python 智能层独立</h3>
+<ol>
+<li><strong>生命周期隔离</strong>：模型调用与工具执行可能持续数秒到数分钟，不能阻塞 Java 业务线程池。</li>
+<li><strong>变化速度不同</strong>：Prompt、图编排和工具描述变化频率高于用户表、权限表和业务事务代码。</li>
+<li><strong>故障域隔离</strong>：模型超时、Token 超限、沙箱 OOM 和工具异常不应拖垮登录、权限和审计基础服务。</li>
+<li><strong>生态匹配</strong>：Python 是 LangGraph、模型 SDK、Embedding、MCP 和数据处理生态的主要承载语言。</li>
+</ol>
+<h3 id="4-5-层间契约">4.5 层间契约</h3>
+<table>
+<thead>
+<tr>
+<th>边界</th>
+<th>协议</th>
+<th>主要约束</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Vue ↔ Java</td>
+<td>HTTP/JSON、SSE</td>
+<td>JWT 鉴权、统一 <code>R&lt;T&gt;</code> 响应、traceId</td>
+</tr>
+<tr>
+<td>Java ↔ Python</td>
+<td>HTTP/JSON、NDJSON</td>
+<td>Java 传入租户、模型和 Agent runtime；Python 返回事件</td>
+</tr>
+<tr>
+<td>Python ↔ 工具</td>
+<td>进程内、MCP stdio、MCP HTTP</td>
+<td>工具描述、JSON Schema、callId、错误脱敏</td>
+</tr>
+<tr>
+<td>Java ↔ MySQL</td>
+<td>JDBC/MyBatis-Plus</td>
+<td>Java 是业务数据唯一写入口</td>
+</tr>
+<tr>
+<td>Java/Python ↔ Redis</td>
+<td>Redis 协议</td>
+<td>TTL、原子计数、限流、配额和临时状态</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="5-技术选型与工程结构">5. 技术选型与工程结构</h2>
+<p class="heading-lead">本节围绕该主题说明平台的设计、实现与验收要点。</p><h3 id="5-1-技术栈">5.1 技术栈</h3>
+<table>
+<thead>
+<tr>
+<th>领域</th>
+<th>技术</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>前端</td>
+<td>Vue 3、TypeScript、Vite、Pinia、Vue Router、Axios、原生 CSS Token</td>
+</tr>
+<tr>
+<td>Java 后端</td>
+<td>Java 17、Spring Boot 3.2/3.3 系列、MyBatis-Plus、Spring Security/JWT、Redis</td>
+</tr>
+<tr>
+<td>AI 引擎</td>
+<td>Python 3.13、FastAPI、LangGraph、LangChain Core、Pydantic、httpx、MCP SDK</td>
+</tr>
+<tr>
+<td>数据库</td>
+<td>MySQL 8/9 本地兼容、PostgreSQL + pgvector 设计、Redis 7</td>
+</tr>
+<tr>
+<td>流式协议</td>
+<td>Java SSE、Python NDJSON</td>
+</tr>
+<tr>
+<td>构建与验证</td>
+<td>Maven、npm/Vite、pytest、shell E2E、稳定性巡检</td>
+</tr>
+</tbody>
+</table>
+<h3 id="5-2-根目录结构">5.2 根目录结构</h3>
+<pre><code class="language-text">开发全流程体验/
+├── backend/
+│   ├── pom.xml
+│   ├── af-common/
+│   ├── af-auth-api/
+│   ├── af-auth-impl/
+│   ├── af-session-api/
+│   ├── af-session-impl/
+│   ├── af-agent/
+│   ├── af-bootstrap/
+│   ├── sql/
+│   └── skill-repo/
+├── agent-engine/
+│   ├── app/
+│   │   ├── graph/
+│   │   ├── model/
+│   │   ├── tools/
+│   │   ├── skills/
+│   │   ├── knowledge/
+│   │   └── sandbox/
+│   └── tests/
+├── frontend/
+│   └── src/
+│       ├── api/
+│       ├── components/
+│       ├── router/
+│       ├── stores/
+│       ├── types/
+│       ├── utils/
+│       └── views/
+├── scripts/
+│   └── start-all.sh
+├── tests/
+│   ├── e2e-smoke.sh
+│   ├── e2e-full.sh
+│   └── soak-30m.sh
+├── docs/
+├── logs/
+└── overview*.md
+</code></pre>
+<h3 id="5-3-java-模块依赖">5.3 Java 模块依赖</h3>
+<pre><code class="language-text">af-bootstrap
+  ├── af-auth-impl
+  │     └── af-auth-api → af-common
+  ├── af-session-impl
+  │     ├── af-session-api → af-common
+  │     └── af-auth-api
+  └── af-agent → af-common
+</code></pre>
+<p>设计原则是模块间优先依赖 <code>api</code> 包，避免 <code>impl</code> 之间直接互相引用，为后续拆分微服务保留边界。</p>
+<h3 id="5-4-前端工作台路由">5.4 前端工作台路由</h3>
+<table>
+<thead>
+<tr>
+<th>路由</th>
+<th>页面</th>
+<th>权限</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/login</code></td>
+<td>登录</td>
+<td>公开</td>
+</tr>
+<tr>
+<td><code>/register</code></td>
+<td>注册</td>
+<td>公开</td>
+</tr>
+<tr>
+<td><code>/forgot-password</code></td>
+<td>找回密码</td>
+<td>公开</td>
+</tr>
+<tr>
+<td><code>/workspace/chat</code></td>
+<td>会话工作台</td>
+<td>登录</td>
+</tr>
+<tr>
+<td><code>/workspace/knowledge</code></td>
+<td>知识库</td>
+<td><code>agent:knowledge:read</code></td>
+</tr>
+<tr>
+<td><code>/workspace/agents</code></td>
+<td>智能体管理</td>
+<td><code>agent:agent:read</code></td>
+</tr>
+<tr>
+<td><code>/workspace/tools</code></td>
+<td>工具与技能</td>
+<td><code>agent:tool:read</code></td>
+</tr>
+<tr>
+<td><code>/workspace/models</code></td>
+<td>模型管理</td>
+<td><code>agent:model:read</code></td>
+</tr>
+<tr>
+<td><code>/workspace/obs</code></td>
+<td>可观测</td>
+<td><code>agent:usage:read</code></td>
+</tr>
+<tr>
+<td><code>/403</code></td>
+<td>无权访问</td>
+<td>登录</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="6-一次聊天请求的完整链路">6. 一次聊天请求的完整链路</h2>
+<p class="heading-lead">本节围绕该主题说明平台的设计、实现与验收要点。</p><h3 id="6-1-请求进入">6.1 请求进入</h3>
+<p>前端向 Java 发起：</p>
+<pre><code class="language-http">POST /api/chat/stream
+Authorization: Bearer &lt;ACCESS_TOKEN&gt;
+Content-Type: application/json
+X-Trace-Id: &lt;TRACE_ID&gt;
+</code></pre>
+<p>请求体核心字段：</p>
+<pre><code class="language-json">{
+  &quot;conversationId&quot;: &quot;&lt;CONVERSATION_ID&gt;&quot;,
+  &quot;content&quot;: &quot;你好，请介绍一下 AgentForge&quot;,
+  &quot;modelConfigId&quot;: 1,
+  &quot;agentId&quot;: 1
+}
+</code></pre>
+<h3 id="6-2-java-chatservice-处理顺序">6.2 Java ChatService 处理顺序</h3>
+<ol>
+<li>从 <code>UserContext</code> 获取用户和租户。</li>
+<li>执行 Token 配额预检。</li>
+<li>创建会话或校验会话归属。</li>
+<li>确定有效 Agent：会话绑定 Agent &gt; 请求级 Agent &gt; 默认助手。</li>
+<li>读取最近 20 条消息构造上下文。</li>
+<li>清理历史中错误保存的 <code>tool_calls</code>/<code>tool_code</code> JSON。</li>
+<li>读取 Agent runtime。</li>
+<li>解析模型优先级：请求级 <code>modelConfigId</code> &gt; Agent 绑定模型 &gt; 平台默认模型。</li>
+<li>写入 user 消息。</li>
+<li>创建 assistant 空壳消息，状态为 streaming。</li>
+<li>通过 <code>HttpAgentEngineClient</code> 调 Python 引擎。</li>
+<li>将 Python NDJSON 事件转成 Java SSE 事件。</li>
+<li>增量累积 assistant 文本，并每 500ms 节流落库。</li>
+<li>每 15 秒发送 ping 保活。</li>
+<li>完成后写模型、Token、耗时、审计和用量。</li>
+<li>异常时保留已生成内容，标记失败/中断并发送安全错误。</li>
+</ol>
+<h3 id="6-3-python-agentgraph-路由">6.3 Python AgentGraph 路由</h3>
+<pre><code class="language-text">START
+  ↓
+agent
+  ├── 命中技能 → skill_start → skill_execute → agent
+  ├── 命中工具 → tool_start → tools → agent
+  └── 无技能/工具 → END
+</code></pre>
+<p><code>agent</code> 节点的优先级为：</p>
+<ol>
+<li>处理技能执行结果。</li>
+<li>处理工具执行结果并生成自然语言总结。</li>
+<li>从历史上下文中提取最后一条用户问题。</li>
+<li>注入 Agent 系统提示词。</li>
+<li>优先匹配技能。</li>
+<li>再规划工具。</li>
+<li>最后生成普通自然语言回复。</li>
+</ol>
+<h3 id="6-4-python-ndjson-到-java-sse">6.4 Python NDJSON 到 Java SSE</h3>
+<p>Python 事件示例：</p>
+<pre><code class="language-json">{&quot;type&quot;:&quot;message_start&quot;,&quot;data&quot;:{&quot;model&quot;:&quot;&lt;MODEL&gt;&quot;}}
+{&quot;type&quot;:&quot;tool_call_start&quot;,&quot;data&quot;:{&quot;call_id&quot;:&quot;&lt;CALL_ID&gt;&quot;,&quot;tool_code&quot;:&quot;calculator&quot;,&quot;status&quot;:&quot;running&quot;}}
+{&quot;type&quot;:&quot;tool_call_result&quot;,&quot;data&quot;:{&quot;call_id&quot;:&quot;&lt;CALL_ID&gt;&quot;,&quot;result&quot;:{&quot;value&quot;:64},&quot;status&quot;:&quot;success&quot;}}
+{&quot;type&quot;:&quot;content_delta&quot;,&quot;data&quot;:{&quot;delta&quot;:&quot;计算结果是 64。&quot;}}
+{&quot;type&quot;:&quot;message_done&quot;,&quot;data&quot;:{&quot;model&quot;:&quot;&lt;MODEL&gt;&quot;,&quot;token_input&quot;:10,&quot;token_output&quot;:20}}
+</code></pre>
+<p>Java 对外通过 SSE 输出：</p>
+<pre><code class="language-text">event: message_start
+event: tool_call_start
+event: tool_call_result
+event: content_delta
+event: message_done
+</code></pre>
+<h3 id="6-5-sse-事件类型">6.5 SSE 事件类型</h3>
+<table>
+<thead>
+<tr>
+<th>事件</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>message_start</code></td>
+<td>assistant 消息已创建，开始生成</td>
+</tr>
+<tr>
+<td><code>content_delta</code></td>
+<td>文本增量</td>
+</tr>
+<tr>
+<td><code>tool_call_start</code></td>
+<td>工具开始调用</td>
+</tr>
+<tr>
+<td><code>tool_call_result</code></td>
+<td>工具成功返回</td>
+</tr>
+<tr>
+<td><code>tool_call_error</code></td>
+<td>工具失败/超时</td>
+</tr>
+<tr>
+<td><code>skill_call_start</code></td>
+<td>技能开始执行</td>
+</tr>
+<tr>
+<td><code>skill_call_result</code></td>
+<td>技能成功返回</td>
+</tr>
+<tr>
+<td><code>skill_call_error</code></td>
+<td>技能失败</td>
+</tr>
+<tr>
+<td><code>message_done</code></td>
+<td>本轮完成并返回模型与 Token 元数据</td>
+</tr>
+<tr>
+<td><code>error</code></td>
+<td>安全错误摘要</td>
+</tr>
+<tr>
+<td><code>ping</code></td>
+<td>连接保活</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="7-认证-token-与权限体系">7. 认证、Token 与权限体系</h2>
+<p class="heading-lead">本节围绕该主题说明平台的设计、实现与验收要点。</p><h3 id="7-1-登录契约">7.1 登录契约</h3>
+<p>正确的登录字段是 <code>identifier</code>，不是 <code>username</code>：</p>
+<pre><code class="language-json">{
+  &quot;identifier&quot;: &quot;admin&quot;,
+  &quot;password&quot;: &quot;&lt;PASSWORD&gt;&quot;
+}
+</code></pre>
+<p><code>identifier</code> 可以是用户名、邮箱或手机号，后端统一识别。</p>
+<h3 id="7-2-双-token-设计">7.2 双 Token 设计</h3>
+<ul>
+<li>access token：短生命周期，仅在前端内存中保存。</li>
+<li>refresh token：较长生命周期，保存在 <code>localStorage</code>，用于刷新 access token。</li>
+<li>refresh token 轮换：旧 refresh token 使用后立即失效。</li>
+<li>密码重置后：吊销用户全部 refresh token。</li>
+</ul>
+<p>开发配置默认值仅用于本地演示，生产环境应通过环境变量提供：</p>
+<pre><code class="language-text">JWT_SECRET=&lt;JWT_SECRET_AT_LEAST_32_BYTES&gt;
+</code></pre>
+<h3 id="7-3-401-刷新队列">7.3 401 刷新队列</h3>
+<p>前端请求层维护：</p>
+<pre><code class="language-ts">let isRefreshing = false
+let pendingQueue: Array&lt;(token: string) =&gt; void&gt; = []
+</code></pre>
+<p>处理规则：</p>
+<ol>
+<li>第一个 401 请求触发 <code>/api/auth/refresh</code>。</li>
+<li>其他并发 401 请求进入队列。</li>
+<li>刷新成功后统一使用新 access token 重放。</li>
+<li>刷新失败则清理本地 Token 并跳转登录页。</li>
+<li>刷新请求使用裸请求，避免刷新接口自身进入 401 递归。</li>
+</ol>
+<h3 id="7-4-rbac-权限">7.4 RBAC 权限</h3>
+<p>后端通过 <code>@RequirePermission</code> 和 <code>PermissionAspect</code> 做真正拦截；前端通过路由 <code>meta.perm</code> 和按钮条件做体验层隐藏。</p>
+<p>管理员角色在前端 <code>hasPerm()</code> 和后端权限层均可通配放行，但生产环境仍应保留最小权限治理。</p>
+<p>典型权限码：</p>
+<pre><code class="language-text">agent:model:read
+agent:model:write
+agent:agent:read
+agent:agent:write
+agent:tool:read
+agent:tool:write
+agent:skill:read
+agent:skill:write
+agent:knowledge:read
+agent:knowledge:write
+agent:usage:read
+agent:audit:read
+</code></pre>
+<hr>
+<h2 id="8-多模型接入与真实模型调用">8. 多模型接入与真实模型调用</h2>
+<p class="heading-lead">本节围绕该主题说明平台的设计、实现与验收要点。</p><h3 id="8-1-provider">8.1 Provider</h3>
+<p>平台模型工厂支持：</p>
+<table>
+<thead>
+<tr>
+<th>Provider</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>deterministic</code></td>
+<td>离线开发、回归测试、无外网兜底</td>
+</tr>
+<tr>
+<td><code>openai</code></td>
+<td>OpenAI 兼容服务</td>
+</tr>
+<tr>
+<td><code>openai-compatible</code></td>
+<td>任意兼容 <code>/chat/completions</code> 的服务</td>
+</tr>
+<tr>
+<td><code>deepseek</code></td>
+<td>DeepSeek API</td>
+</tr>
+<tr>
+<td><code>qwen</code></td>
+<td>通义千问兼容 API</td>
+</tr>
+<tr>
+<td><code>ollama</code></td>
+<td>本地 Ollama 服务</td>
+</tr>
+</tbody>
+</table>
+<h3 id="8-2-base-url-规范化">8.2 Base URL 规范化</h3>
+<p>输入可为：</p>
+<pre><code class="language-text">https://api.example.com
+https://api.example.com/
+https://api.example.com/v1/
+https://api.example.com/v1/chat/completions
+</code></pre>
+<p>系统统一解析为兼容端点，并避免重复拼接 <code>/chat/completions</code>。</p>
+<h3 id="8-3-api-key-安全">8.3 API Key 安全</h3>
+<ul>
+<li>数据库和管理页面只显示脱敏 Key。</li>
+<li>脱敏值不能作为真实上游请求凭据。</li>
+<li>更新模型时，如果前端提交的是脱敏占位值，后端应保留原密钥，而不是覆盖为脱敏文本。</li>
+<li>文档、日志、审计和 SSE 均不输出真实 Key。</li>
+</ul>
+<h3 id="8-4-代理与网络故障">8.4 代理与网络故障</h3>
+<p>真实模型调用使用：</p>
+<pre><code class="language-python">httpx.Client(
+    timeout=httpx.Timeout(90.0, connect=10.0),
+    trust_env=False,
+)
+</code></pre>
+<p>这样可避免 <code>HTTP_PROXY</code>/<code>HTTPS_PROXY</code> 环境变量将模型请求导向不可用的本地代理。对于本地 Ollama，可通过 <code>NO_PROXY</code> 和 <code>trust_env=False</code> 确保直连。</p>
+<h3 id="8-5-错误分类">8.5 错误分类</h3>
+<table>
+<thead>
+<tr>
+<th>上游情况</th>
+<th>对外摘要</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>401</td>
+<td>上游模型认证失败</td>
+</tr>
+<tr>
+<td>402</td>
+<td>账户余额或额度不足，应检查供应商账户</td>
+</tr>
+<tr>
+<td>403</td>
+<td>上游模型访问被拒绝</td>
+</tr>
+<tr>
+<td>404</td>
+<td>上游模型接口或模型不存在</td>
+</tr>
+<tr>
+<td>429</td>
+<td>上游模型请求过于频繁</td>
+</tr>
+<tr>
+<td>5xx</td>
+<td>上游模型服务暂时不可用</td>
+</tr>
+<tr>
+<td>超时</td>
+<td>请求上游模型超时</td>
+</tr>
+<tr>
+<td>连接失败</td>
+<td>无法连接上游模型</td>
+</tr>
+<tr>
+<td>响应格式错误</td>
+<td>上游模型响应格式无效</td>
+</tr>
+</tbody>
+</table>
+<h3 id="8-6-原始工具协议清理">8.6 原始工具协议清理</h3>
+<p>曾出现上游返回：</p>
+<pre><code class="language-json">{&quot;tool_calls&quot;:[{&quot;name&quot;:&quot;get_self_introduction&quot;,&quot;arguments&quot;:{}}]}
+</code></pre>
+<p>修复策略：</p>
+<ol>
+<li>读取标准 <code>message.tool_calls</code>。</li>
+<li>兼容 content 内嵌 JSON 的 <code>tool_calls</code>/<code>tool_code</code>。</li>
+<li>转换为内部统一工具计划。</li>
+<li>仅通过 <code>tool_call_start</code>、<code>tool_call_result</code> 等事件对外展示。</li>
+<li>工具执行后重新生成自然语言总结。</li>
+<li>若上游仍输出原始 JSON，触发自然语言重试。</li>
+<li>Java 和 Python 均清洗历史，禁止把原始协议作为普通 assistant 内容保存。</li>
+</ol>
+<hr>
+<h2 id="9-agent-智能体系统">9. Agent 智能体系统</h2>
+<p class="heading-lead">本节围绕该主题说明平台的设计、实现与验收要点。</p><h3 id="9-1-agent-生命周期">9.1 Agent 生命周期</h3>
+<pre><code class="language-text">草稿 status=1
+   ↓ 编辑配置
+发布 status=2
+   ↓
+启用并可被会话调用
+   ↓ 停用 status=3
+   ↓ 删除
+</code></pre>
+<h3 id="9-2-agent-配置内容">9.2 Agent 配置内容</h3>
+<p>一个 Agent 可配置：</p>
+<ul>
+<li>名称、编码、描述。</li>
+<li>系统提示词。</li>
+<li>默认模型。</li>
+<li>工具白名单。</li>
+<li>技能白名单。</li>
+<li>知识库文档白名单。</li>
+<li>发布状态和版本。</li>
+</ul>
+<h3 id="9-3-agent-选择优先级">9.3 Agent 选择优先级</h3>
+<pre><code class="language-text">会话绑定 Agent
+  &gt; 请求级 agentId
+  &gt; 默认助手
+</code></pre>
+<p>会话绑定后，后续多轮消息复用同一 Agent，避免用户每轮重复选择。</p>
+<h3 id="9-4-模型选择优先级">9.4 模型选择优先级</h3>
+<pre><code class="language-text">请求级 modelConfigId
+  &gt; Agent 绑定 model_config_id
+  &gt; 平台默认模型
+</code></pre>
+<p>该优先级解决了“聊天页面选了真实模型但请求又切回 deterministic”的问题。</p>
+<h3 id="9-5-运行时资源白名单">9.5 运行时资源白名单</h3>
+<p>Python 引擎收到 Agent runtime 后：</p>
+<ul>
+<li><code>tool_ids=[]</code> 表示不开放工具，不表示加载全部工具。</li>
+<li><code>skill_ids=[]</code> 表示不开放技能。</li>
+<li><code>knowledge_doc_ids</code> 限制知识检索范围。</li>
+<li>Java 注入配置，Python 再过滤一次。</li>
+<li>Agent 不能调用未绑定工具或技能。</li>
+<li><code>knowledge_search</code> 会携带限定的 <code>doc_ids</code>。</li>
+</ul>
+<h3 id="9-6-agent-rest-接口">9.6 Agent REST 接口</h3>
+<pre><code class="language-text">GET    /api/agents
+GET    /api/agents/{id}
+GET    /api/agents/{id}/runtime
+POST   /api/agents
+PUT    /api/agents/{id}
+PATCH  /api/agents/{id}/status
+POST   /api/agents/{id}/publish
+DELETE /api/agents/{id}
+</code></pre>
+<hr>
+<h2 id="10-mcp-工具体系">10. MCP 工具体系</h2>
+<p class="heading-lead">本节围绕该主题说明平台的设计、实现与验收要点。</p><h3 id="10-1-工具注册中心">10.1 工具注册中心</h3>
+<p>Java 侧维护工具和 MCP Server 元数据，提供管理接口和内部发现接口。管理端返回安全 DTO，不把 command、args、headers 等敏感执行配置直接暴露给普通前端。</p>
+<h3 id="10-2-工具描述契约">10.2 工具描述契约</h3>
+<p>核心字段包括：</p>
+<pre><code class="language-text">id
+code
+name
+description
+inputSchema
+outputSchema
+executorType
+transport
+timeoutMs
+enabled
+</code></pre>
+<p>工具执行结果统一包含：</p>
+<pre><code class="language-text">call_id
+tool_code
+status
+result
+error_code
+error_message
+duration_ms
+</code></pre>
+<h3 id="10-3-python-tool-gateway">10.3 Python Tool Gateway</h3>
+<p>Tool Gateway 负责：</p>
+<ol>
+<li>校验工具是否存在且启用。</li>
+<li>校验 JSON Schema 输入。</li>
+<li>根据 <code>executorType</code> 分发 builtin 或 MCP。</li>
+<li>执行超时控制。</li>
+<li>将异常转换为稳定业务错误。</li>
+<li>返回工具结果并保留 callId。</li>
+</ol>
+<h3 id="10-4-内置工具">10.4 内置工具</h3>
+<p class="heading-lead">本节围绕该主题说明平台的设计、实现与验收要点。</p><h4 id="calculator">calculator</h4>
+<p>使用 AST 白名单安全解析，不使用 <code>eval</code>。支持数字、四则运算和括号，拒绝属性访问、函数调用、导入和危险语法。</p>
+<h4 id="get-current-time">get_current_time</h4>
+<p>按 IANA 时区返回当前时间，例如 <code>Asia/Shanghai</code>。</p>
+<h4 id="unit-converter">unit_converter</h4>
+<p>支持长度、重量、温度、面积等类别的单位换算。技能白名单可以限制其只在单位换算场景使用。</p>
+<h4 id="code-exec">code_exec</h4>
+<p>通过独立进程执行受限 Python 代码，返回：</p>
+<pre><code class="language-text">status
+stdout
+stderr
+duration_ms
+exit_code
+error_code
+</code></pre>
+<h3 id="10-5-工具审计">10.5 工具审计</h3>
+<p>工具开始时写入 <code>message_tool_call</code>，完成时更新状态、结果/错误、耗时和结束时间。<code>call_id</code> 在 Python、Java、SSE、MySQL 之间贯穿，使用租户和 callId 关联。</p>
+<hr>
+<h2 id="11-skill-技能系统与-skillzip-导入">11. Skill 技能系统与 <code>.skillzip</code> 导入</h2>
+<p class="heading-lead">本节围绕该主题说明平台的设计、实现与验收要点。</p><h3 id="11-1-技能定位">11.1 技能定位</h3>
+<p>P9 的 Skill 是受信提示词技能包，不等同于任意代码插件。技能主要负责：</p>
+<ul>
+<li>触发规则。</li>
+<li>领域提示词。</li>
+<li>步骤、模板和约束。</li>
+<li>对工具权限进行进一步收窄。</li>
+</ul>
+<p>任意代码执行属于 P10 沙箱能力。</p>
+<h3 id="11-2-三态披露">11.2 三态披露</h3>
+<pre><code class="language-text">L0：元数据
+    code/name/description/triggers/allowed_tools
+       ↓ 命中
+L1：读取 SKILL.md 全文
+       ↓ 执行
+L2：注入 system prompt + 工具白名单收窄 + 审计
+</code></pre>
+<h3 id="11-3-skill-md-格式">11.3 SKILL.md 格式</h3>
+<pre><code class="language-markdown">---
+name: 单位换算
+description: 把自然语言里的单位换算成标准值
+version: 1.0.0
+allowed_tools:
+  - unit_converter
+---
+
+当用户请求单位换算时，识别源单位、目标单位和数值，调用允许的工具并返回自然语言结果。
+</code></pre>
+<p>文件位置：</p>
+<pre><code class="language-text">skill-repo/tenant-{tenantId}/{skillCode}/SKILL.md
+</code></pre>
+<h3 id="11-4-技能权限原则">11.4 技能权限原则</h3>
+<pre><code class="language-text">实际可用工具 = Agent 工具白名单 ∩ Skill allowed_tools
+</code></pre>
+<p>技能只能收窄工具集合，不能绕过 Agent 白名单。</p>
+<h3 id="11-5-技能事件">11.5 技能事件</h3>
+<pre><code class="language-text">skill_call_start
+skill_call_result
+skill_call_error
+</code></pre>
+<p>技能内部调用工具时，仍然生成独立的 <code>tool_call_*</code> 事件，形成技能轨和工具轨的双轨审计。</p>
+<h3 id="11-6-skillzip-安全校验">11.6 <code>.skillzip</code> 安全校验</h3>
+<p>上传接口：</p>
+<pre><code class="language-http">POST /api/skills/upload
+Content-Type: multipart/form-data
+</code></pre>
+<p>校验项目：</p>
+<ul>
+<li>上传文件不超过 10MB。</li>
+<li>解压后总大小不超过 32MB。</li>
+<li>ZIP 条目不超过 256 个。</li>
+<li>拒绝绝对路径。</li>
+<li>拒绝 <code>../</code> 路径穿越。</li>
+<li>拒绝危险扩展名。</li>
+<li>必须存在唯一 <code>SKILL.md</code>。</li>
+<li>校验 YAML front matter。</li>
+<li>校验 <code>name</code>、<code>description</code>、<code>version</code>。</li>
+<li>校验 <code>allowed_tools</code> 格式。</li>
+<li>使用临时目录解压。</li>
+<li>通过校验后原子移动到租户目录。</li>
+<li>数据库事务失败时清理落盘文件并回滚。</li>
+<li>所有导入动作写审计记录。</li>
+</ul>
+<h3 id="11-7-技能管理接口">11.7 技能管理接口</h3>
+<pre><code class="language-text">GET    /api/skills
+POST   /api/skills
+POST   /api/skills/upload
+PATCH  /api/skills/{id}
+PATCH  /api/skills/{id}/status
+DELETE /api/skills/{id}
+</code></pre>
+<hr>
+<h2 id="12-代码执行沙箱">12. 代码执行沙箱</h2>
+<p class="heading-lead">本节围绕该主题说明平台的设计、实现与验收要点。</p><h3 id="12-1-安全模型">12.1 安全模型</h3>
+<p>代码执行采用多层防线：</p>
+<ol>
+<li>AST 预检：只允许安全节点。</li>
+<li>import 白名单：仅允许纯计算类库，例如 <code>math</code>。</li>
+<li>调用黑名单：拒绝 <code>open</code>、<code>exec</code>、<code>eval</code>、<code>compile</code> 等。</li>
+<li>魔术属性拦截：拒绝 <code>__class__</code>、<code>__globals__</code> 等逃逸路径。</li>
+<li>独立进程：避免执行代码污染 Agent 主进程。</li>
+<li>进程组隔离：使用 <code>start_new_session</code>，超时后强杀进程组。</li>
+<li>资源限制：CPU 约 2 秒、内存约 256MB、文件描述符约 32。</li>
+<li>输出截断：stdout/stderr 限制约 8KB。</li>
+<li>统一结果：不把底层 traceback 直接返回用户。</li>
+</ol>
+<h3 id="12-2-验证场景">12.2 验证场景</h3>
+<ul>
+<li><code>sum(1..100)=5050</code> 成功。</li>
+<li><code>import os</code> 被拒绝。</li>
+<li><code>open(...)</code> 被拒绝。</li>
+<li>魔术属性访问被拒绝。</li>
+<li>死循环超时后进程组被清理。</li>
+<li>代码崩溃会返回稳定错误码。</li>
+<li><code>import math</code> 等安全库可用。</li>
+</ul>
+<hr>
+<h2 id="13-rag-知识库">13. RAG 知识库</h2>
+<p class="heading-lead">本节围绕该主题说明平台的设计、实现与验收要点。</p><h3 id="13-1-数据流">13.1 数据流</h3>
+<pre><code class="language-text">文档导入
+  ↓
+文本清洗
+  ↓
+按段落/长度分块
+  ↓
+向量或关键词索引
+  ↓
+按 query 检索
+  ↓
+返回 chunk、score、文档标题和来源
+  ↓
+Agent 生成回答并可展示知识来源
+</code></pre>
+<h3 id="13-2-存储设计">13.2 存储设计</h3>
+<p>MySQL 保存文档元数据，例如：</p>
+<pre><code class="language-text">knowledge_doc
+  id
+  tenant_id
+  title
+  source_type
+  source_url
+  status
+  chunk_count
+  indexed_at
+  deleted_at
+</code></pre>
+<p>PostgreSQL 设计包含：</p>
+<pre><code class="language-text">knowledge_base
+document
+doc_chunk
+embed_job
+</code></pre>
+<p>本地开发环境提供 Python <code>data/knowledge/</code> 降级存储，便于没有 PostgreSQL/pgvector 时完成开发与验证。</p>
+<h3 id="13-3-agent-绑定范围">13.3 Agent 绑定范围</h3>
+<p>Agent runtime 传入 <code>knowledge_doc_ids</code>，Python 侧的知识搜索只能在允许的文档范围内检索，避免 Agent 看到不应访问的资料。</p>
+<h3 id="13-4-管理接口">13.4 管理接口</h3>
+<pre><code class="language-text">GET    /api/knowledge
+GET    /api/knowledge/{docId}
+PUT    /api/knowledge/{docId}
+POST   /api/knowledge/{docId}/reindex
+POST   /api/knowledge/search
+DELETE /api/knowledge/{docId}
+</code></pre>
+<hr>
+<h2 id="14-数据库与-redis-设计">14. 数据库与 Redis 设计</h2>
+<p class="heading-lead">本节围绕该主题说明平台的设计、实现与验收要点。</p><h3 id="14-1-mysql-表域">14.1 MySQL 表域</h3>
+<p>当前 MySQL 初始化脚本包含用户、权限、会话、Agent、工具、技能、审计、用量、知识和模型等表，代表性表包括：</p>
+<pre><code class="language-text">sys_user
+sys_role
+sys_permission
+sys_role_permission
+sys_user_role
+conversation
+message
+message_tool_call
+message_skill_call
+agent
+agent_version
+tool
+mcp_server
+skill
+audit_log
+api_usage
+api_quota
+knowledge_doc
+model_config
+</code></pre>
+<h3 id="14-2-删除策略">14.2 删除策略</h3>
+<ul>
+<li>用户、会话、Agent：软删。</li>
+<li>消息关联、工具调用和技能调用：按业务关系清理。</li>
+<li>审计日志：原则上不随业务删除，按分区和归档治理。</li>
+</ul>
+<h3 id="14-3-redis-key-规范">14.3 Redis Key 规范</h3>
+<p>统一格式：</p>
+<pre><code class="language-text">af:{env}:{domain}:{business-key}
+</code></pre>
+<p>典型域：</p>
+<pre><code class="language-text">captcha
+rl
+lock
+agent
+cache
+quota
+jwt
+</code></pre>
+<p>所有 Key 必须设置 TTL；禁止使用 <code>KEYS</code>，使用 <code>SCAN</code>。</p>
+<h3 id="14-4-redis-使用场景">14.4 Redis 使用场景</h3>
+<ul>
+<li>验证码：<code>GETDEL</code> 单次消费。</li>
+<li>登录/接口限流：<code>INCR + EXPIRE</code>，必要时 Lua 保证原子性。</li>
+<li>Agent 任务锁：<code>SET NX PX</code>，释放时比较持有者标识。</li>
+<li>checkpoint：按 thread/node 保存运行快照。</li>
+<li>Token 配额：<code>INCRBY</code> 实时统计。</li>
+<li>refresh token：按用户和 jti 存储并轮换。</li>
+<li>缓存：Cache-Aside，写库后删除缓存。</li>
+</ul>
+<hr>
+<h2 id="15-前端工作台实现">15. 前端工作台实现</h2>
+<p class="heading-lead">本节围绕该主题说明平台的设计、实现与验收要点。</p><h3 id="15-1-设计系统">15.1 设计系统</h3>
+<p>前端使用 CSS Design Token，不引入 Element Plus 等现成 UI 库。核心视觉方向为冷静工程感：中性灰、细边框、留白、双主题、线性 SVG 图标。</p>
+<p>浅色/深色主题通过：</p>
+<pre><code class="language-html">&lt;html data-theme=&quot;light&quot;&gt;
+</code></pre>
+<p>和 CSS 变量切换，组件不感知具体主题。</p>
+<h3 id="15-2-chatview">15.2 ChatView</h3>
+<p>ChatView 负责：</p>
+<ul>
+<li>会话列表。</li>
+<li>会话新建、删除、批量删除、一键清空。</li>
+<li>Agent 与模型选择。</li>
+<li>消息历史恢复。</li>
+<li>SSE 文本增量消费。</li>
+<li>Markdown 轻渲染。</li>
+<li>工具和技能时间线。</li>
+<li>安全过程摘要。</li>
+<li>停止按钮。</li>
+</ul>
+<h3 id="15-3-过程可视化">15.3 过程可视化</h3>
+<p>前端使用安全的 <code>ThinkingStep</code> 结构：</p>
+<pre><code class="language-ts">interface ThinkingStep {
+  label: string
+  detail?: string
+  phase?: 'analysis' | 'action' | 'knowledge' | 'generation' | 'complete'
+  status: 'running' | 'done' | 'error'
+}
+</code></pre>
+<p>展示内容可以包括：</p>
+<ul>
+<li>正在分析请求。</li>
+<li>正在选择工具或技能。</li>
+<li>正在检索知识库。</li>
+<li>工具执行成功/失败。</li>
+<li>技能执行成功/失败。</li>
+<li>正在生成回答。</li>
+<li>回答已完成。</li>
+</ul>
+<p>不展示：</p>
+<ul>
+<li>模型隐藏逐字思维链。</li>
+<li>原始 system prompt。</li>
+<li>完整工具内部参数。</li>
+<li>内部规划 JSON。</li>
+<li>Python 堆栈和环境变量。</li>
+</ul>
+<h3 id="15-4-滚动布局修复">15.4 滚动布局修复</h3>
+<p>工作台外层固定 <code>100dvh</code> 并 <code>overflow: hidden</code>；聊天消息区独立 <code>overflow-y: auto</code>；所有关键 Flex 子项增加 <code>min-height: 0</code>。这样聊天区域向下滚动时，左侧导航不会跟随页面一起滚动。</p>
+<h3 id="15-5-工具与技能页面修复">15.5 工具与技能页面修复</h3>
+<p>曾经出现页面乱码、空白和入口进入聊天页等问题，最终修复包括：</p>
+<ul>
+<li>增加 <code>/workspace/tools</code> 子路由。</li>
+<li>权限从错误的 <code>agent:skill:read</code> 修正为 <code>agent:tool:read</code>。</li>
+<li>工具和技能接口使用 <code>Promise.allSettled</code> 独立加载。</li>
+<li>增加加载中、错误、空数据和重试状态。</li>
+<li>补齐 <code>AfIcon</code> 的 <code>upload</code> 图标。</li>
+<li>未知图标使用安全空对象兜底。</li>
+<li>修正 Vue CSS 未闭合括号导致的构建失败。</li>
+</ul>
+<p>真实浏览器验收时，页面可以看到 4 个工具和 3 个技能，并能打开编辑弹窗。</p>
+<hr>
+<h2 id="16-可观测性-审计与用量">16. 可观测性、审计与用量</h2>
+<p class="heading-lead">本节围绕该主题说明平台的设计、实现与验收要点。</p><h3 id="16-1-traceid">16.1 traceId</h3>
+<p>traceId 从前端请求进入，经过 Java、Python、工具/技能执行，最终进入日志、SSE 和审计记录，用于跨语言串联一次请求。</p>
+<h3 id="16-2-审计范围">16.2 审计范围</h3>
+<ul>
+<li>登录成功/失败。</li>
+<li>模型连接测试和模型调用。</li>
+<li>Agent 创建、编辑、发布、停用、删除。</li>
+<li>工具注册、启停、删除和调用。</li>
+<li>技能创建、上传、启停、删除和调用。</li>
+<li>知识库创建、编辑、重索引、删除和检索。</li>
+<li>聊天完成、失败和中断。</li>
+<li>配额拒绝和上游模型异常。</li>
+</ul>
+<h3 id="16-3-用量记录">16.3 用量记录</h3>
+<p><code>api_usage</code> 记录：</p>
+<pre><code class="language-text">tenant_id
+user_id
+conversation_id
+model
+input_tokens
+output_tokens
+latency_ms
+created_at
+</code></pre>
+<p>Redis 用于实时预检和展示，MySQL 用于记账和后续对账。</p>
+<h3 id="16-4-可观测接口">16.4 可观测接口</h3>
+<pre><code class="language-text">GET /api/usage/stats
+GET /api/audit/logs
+</code></pre>
+<p>前端 ObservabilityView 展示今日用量、配额、7 日趋势和审计日志。</p>
+<hr>
+<h2 id="17-关键问题-根因与修复记录">17. 关键问题、根因与修复记录</h2>
+<p class="heading-lead">本节围绕该主题说明平台的设计、实现与验收要点。</p><h3 id="17-1-登录反复提示-登录已过期">17.1 登录反复提示“登录已过期”</h3>
+<p><strong>根因</strong>：页面刷新后 access token 只存在内存；refresh token 生命周期和并发刷新处理不完整。</p>
+<p><strong>修复</strong>：refresh token 持久化、access token 内存化、统一 refresh 接口、401 刷新队列、失败清理和登录跳转。</p>
+<h3 id="17-2-登录接口字段错误">17.2 登录接口字段错误</h3>
+<p><strong>错误请求</strong>：<code>username</code>。</p>
+<p><strong>正确请求</strong>：<code>identifier</code>。</p>
+<p><strong>修复</strong>：前端 LoginView、E2E 脚本和文档统一使用 <code>identifier</code>。</p>
+<h3 id="17-3-java-端口冲突">17.3 Java 端口冲突</h3>
+<p><strong>根因</strong>：8080 被本机其他项目占用。</p>
+<p><strong>修复</strong>：Java 切换到 8090，并同步修改前端代理、Python 调用、启动脚本和测试脚本。</p>
+<h3 id="17-4-旧-jar-未加载">17.4 旧 JAR 未加载</h3>
+<p><strong>根因</strong>：代码已修改，但 Java 进程仍运行旧 JAR。</p>
+<p><strong>修复</strong>：统一使用 <code>scripts/start-all.sh --restart-java</code>，启动后访问 <code>/health</code> 并重新回归。</p>
+<h3 id="17-5-根路径-actuator-500">17.5 根路径/Actuator 500</h3>
+<p><strong>根因</strong>：根路径和 Actuator 入口不是稳定的项目健康契约。</p>
+<p><strong>修复</strong>：以专用 <code>/health</code> 为有效检查入口，返回：</p>
+<pre><code class="language-json">{
+  &quot;code&quot;: 0,
+  &quot;data&quot;: { &quot;status&quot;: &quot;UP&quot; }
+}
+</code></pre>
+<h3 id="17-6-deepseek-401-402">17.6 DeepSeek 401/402</h3>
+<p><strong>401 根因</strong>：Key 错误、脱敏 Key 被发送、Provider/base URL/model 配置不一致。</p>
+<p><strong>402 根因</strong>：供应商账户余额或额度不足。</p>
+<p><strong>修复</strong>：禁止脱敏 Key 上送；分类提示认证失败、余额不足、权限拒绝和请求过频；增加连接测试和安全降级。</p>
+<h3 id="17-7-系统代理导致模型连接拒绝">17.7 系统代理导致模型连接拒绝</h3>
+<p><strong>根因</strong>：Python/http 客户端读取了不可用的 <code>HTTP_PROXY</code>/<code>HTTPS_PROXY</code>。</p>
+<p><strong>修复</strong>：真实模型客户端使用 <code>trust_env=False</code>，本地服务配置 <code>NO_PROXY</code>，Git 操作单独使用可用网络路径。</p>
+<h3 id="17-8-聊天选择模型后自动切回-deterministic">17.8 聊天选择模型后自动切回 deterministic</h3>
+<p><strong>根因</strong>：请求级模型 ID 没有贯通；Agent 绑定模型优先级未生效。</p>
+<p><strong>修复</strong>：Java 读取 <code>modelConfigId</code>，无请求级值时读取 Agent runtime，再回退平台默认；Python 按请求级配置创建模型实例。</p>
+<h3 id="17-9-普通问候返回-tool-calls-json">17.9 普通问候返回 tool_calls JSON</h3>
+<p><strong>根因</strong>：上游返回结构化工具协议，Java/Python 将其当成 assistant 文本展示并落库。</p>
+<p><strong>修复</strong>：解析标准与非标准工具协议、转内部事件、自然语言重试、历史清洗、禁止原始协议作为普通 assistant 内容。</p>
+<h3 id="17-10-偶发不回答问题">17.10 偶发不回答问题</h3>
+<p><strong>根因</strong>：旧工具 JSON 污染历史；技能节点收到整段会话；当前问题没有从历史中提取。</p>
+<p><strong>修复</strong>：Java <code>sanitizeHistoryContent</code>、Python <code>_latest_user_prompt()</code>、过滤旧工具协议、自然语言兜底和多轮回归。</p>
+<h3 id="17-11-python-缩进错误导致引擎无法启动">17.11 Python 缩进错误导致引擎无法启动</h3>
+<p><strong>根因</strong>：修改 <code>async for graph_event</code> 流式循环时造成缩进错误。</p>
+<p><strong>修复</strong>：重新整理 <code>main.py</code> 事件循环，执行 Python 测试后重启引擎。</p>
+<h3 id="17-12-工具与技能入口进入聊天页">17.12 工具与技能入口进入聊天页</h3>
+<p><strong>根因</strong>：路由缺失或导航目标不一致。</p>
+<p><strong>修复</strong>：增加 <code>/workspace/tools</code>，指向 <code>ToolsView.vue</code>，校准权限。</p>
+<h3 id="17-13-工具与技能页面-css-构建失败">17.13 工具与技能页面 CSS 构建失败</h3>
+<p><strong>根因</strong>：<code>var(--color-text-tertiary</code> 少了右括号。</p>
+<p><strong>修复</strong>：补齐括号，并重新执行类型检查与生产构建。</p>
+<h3 id="17-14-工具与技能页面空白">17.14 工具与技能页面空白</h3>
+<p><strong>根因</strong>：接口实际返回正常，但 <code>AfIcon</code> 缺少 <code>upload</code> 图标，模板运行期渲染异常；同时存在旧 HMR 缓存干扰。</p>
+<p><strong>修复</strong>：增加 upload 图标、未知图标兜底、独立接口加载状态和强制刷新建议。</p>
+<h3 id="17-15-聊天滚动带动左侧导航">17.15 聊天滚动带动左侧导航</h3>
+<p><strong>根因</strong>：外层高度不固定、Flex 子项缺少 <code>min-height: 0</code>、滚动容器边界不清晰。</p>
+<p><strong>修复</strong>：固定 100dvh、外层 hidden、消息区独立滚动和子项最小高度修复。</p>
+<h3 id="17-16-github-首次推送非-fast-forward">17.16 GitHub 首次推送非 fast-forward</h3>
+<p><strong>根因</strong>：远程仓库已有初始 README 提交，本地仓库为独立历史。</p>
+<p><strong>修复</strong>：<code>git fetch origin main</code>、<code>git rebase origin/main</code>、<code>git push -u origin main</code>。</p>
+<hr>
+<h2 id="18-测试与验收">18. 测试与验收</h2>
+<p class="heading-lead">本节围绕该主题说明平台的设计、实现与验收要点。</p><h3 id="18-1-python-单元测试">18.1 Python 单元测试</h3>
+<p>测试覆盖：</p>
+<ul>
+<li>引擎健康和流式契约。</li>
+<li>calculator 安全表达式。</li>
+<li>除零错误脱敏。</li>
+<li>current_time 工具。</li>
+<li>code_exec 成功、危险 import、文件访问、魔术属性、超时和进程组清理。</li>
+<li>unit_converter 重量、温度、跨类别和未知单位。</li>
+<li>技能 keyword/regex 匹配。</li>
+<li>技能工具白名单只收窄不放大。</li>
+<li>text_polish 纯提示词技能。</li>
+<li>知识库分块、检索、删除和相似度。</li>
+<li>Provider/base URL 校验。</li>
+<li>401、403、404、429、5xx、超时和网络错误摘要。</li>
+<li>deterministic 模型对当前问题的回答。</li>
+</ul>
+<h3 id="18-2-前端验证">18.2 前端验证</h3>
+<pre><code class="language-bash">npm run type-check
+npm run build
+</code></pre>
+<p>验收标准：</p>
+<ul>
+<li><code>vue-tsc --noEmit</code> 无类型错误。</li>
+<li><code>vite build</code> 成功。</li>
+<li>路由懒加载正常。</li>
+<li>ChatView 可消费 SSE。</li>
+<li>ToolsView 不因一侧接口失败而完全空白。</li>
+<li>左侧导航不随消息区域滚动。</li>
+</ul>
+<h3 id="18-3-java-验证">18.3 Java 验证</h3>
+<pre><code class="language-bash">mvn -DskipTests package
+</code></pre>
+<p>验收标准：</p>
+<ul>
+<li>多模块依赖正确。</li>
+<li>fat-jar 生成。</li>
+<li><code>/health</code> 返回 UP。</li>
+<li>认证、模型、会话、Agent、工具、技能、知识库、用量和审计接口可访问。</li>
+</ul>
+<h3 id="18-4-冒烟测试">18.4 冒烟测试</h3>
+<p><code>tests/e2e-smoke.sh</code> 覆盖：</p>
+<ol>
+<li>登录。</li>
+<li>默认模型检查。</li>
+<li>会话创建和删除。</li>
+<li>deterministic SSE。</li>
+<li>普通问候和平台介绍。</li>
+<li>真实模型失败降级。</li>
+<li>原始工具协议不泄漏。</li>
+</ol>
+<h3 id="18-5-全量回归">18.5 全量回归</h3>
+<p><code>tests/e2e-full.sh</code> 覆盖：</p>
+<ul>
+<li>双 Token 登录和刷新。</li>
+<li><code>/auth/me</code>。</li>
+<li>模型列表和连接测试。</li>
+<li>会话创建、删除和列表消失。</li>
+<li>deterministic 聊天。</li>
+<li>真实模型失败降级。</li>
+<li>工具列表。</li>
+<li>技能列表。</li>
+<li>知识库列表。</li>
+</ul>
+<h3 id="18-6-30-分钟稳定性巡检">18.6 30 分钟稳定性巡检</h3>
+<p><code>tests/soak-30m.sh</code> 周期执行：</p>
+<ul>
+<li>Java health。</li>
+<li>Python engine health。</li>
+<li>登录。</li>
+<li>模型列表。</li>
+<li>会话创建。</li>
+<li>普通问候。</li>
+<li>平台介绍。</li>
+<li>数学问题。</li>
+<li>calculator。</li>
+<li>会话删除。</li>
+<li>每十轮 Agent 列表。</li>
+<li>原始工具协议泄漏检查。</li>
+</ul>
+<p>历史执行结果为 35 轮、353 个检查通过、0 个失败。</p>
+<hr>
+<h2 id="19-本地启动与运维">19. 本地启动与运维</h2>
+<p class="heading-lead">本节围绕该主题说明平台的设计、实现与验收要点。</p><h3 id="19-1-一键启动">19.1 一键启动</h3>
+<pre><code class="language-bash">bash scripts/start-all.sh
+</code></pre>
+<p>如需重启 Java：</p>
+<pre><code class="language-bash">bash scripts/start-all.sh --restart-java
+</code></pre>
+<p>脚本具备：</p>
+<ul>
+<li>端口探测。</li>
+<li>MySQL/Redis/Python/Java/Vite 幂等启动。</li>
+<li>HTTP/TCP readiness 检查。</li>
+<li>日志统一写入 <code>logs/</code>。</li>
+<li>已运行服务自动跳过。</li>
+<li>失败时返回非零退出码。</li>
+</ul>
+<h3 id="19-2-本地访问">19.2 本地访问</h3>
+<pre><code class="language-text">前端：http://127.0.0.1:5173
+后端健康：http://127.0.0.1:8090/health
+Python 健康：http://127.0.0.1:8000/health
+</code></pre>
+<p>本地演示账号：</p>
+<pre><code class="language-text">账号：admin
+密码：&lt;LOCAL_DEMO_PASSWORD&gt;
+</code></pre>
+<p>如需使用实际演示密码，应仅从本地安全配置读取，不要把密码提交到仓库或写入公开文档。</p>
+<h3 id="19-3-关键环境变量">19.3 关键环境变量</h3>
+<pre><code class="language-text">MYSQL_URL=&lt;MYSQL_JDBC_URL&gt;
+MYSQL_USER=&lt;MYSQL_USER&gt;
+MYSQL_PASSWORD=&lt;MYSQL_PASSWORD&gt;
+REDIS_HOST=127.0.0.1
+REDIS_PORT=6379
+JWT_SECRET=&lt;JWT_SECRET&gt;
+AGENT_ENGINE_PROVIDER=http
+AGENT_ENGINE_URL=http://127.0.0.1:8000
+SKILL_REPO_DIR=&lt;SKILL_REPO_DIR&gt;
+KNOWLEDGE_ENGINE_URL=http://127.0.0.1:8000
+</code></pre>
+<p>真实模型配置不要写入 Git：</p>
+<pre><code class="language-text">MODEL_PROVIDER=&lt;deepseek|openai|qwen|ollama&gt;
+MODEL_NAME=&lt;MODEL_NAME&gt;
+MODEL_BASE_URL=&lt;MODEL_BASE_URL&gt;
+MODEL_API_KEY=&lt;MODEL_API_KEY&gt;
+</code></pre>
+<h3 id="19-4-日志">19.4 日志</h3>
+<pre><code class="language-text">logs/mysql.log
+logs/redis.log
+logs/agent-engine.log
+logs/java.log
+logs/frontend.log
+logs/soak-*.log
+</code></pre>
+<p>生产环境应进一步使用结构化日志、集中采集、敏感字段脱敏和日志保留策略。</p>
+<hr>
+<h2 id="20-github-发布与仓库安全">20. GitHub 发布与仓库安全</h2>
+<p class="heading-lead">本节围绕该主题说明平台的设计、实现与验收要点。</p><h3 id="20-1-发布结果">20.1 发布结果</h3>
+<ul>
+<li>远程仓库：<code>https://github.com/javk-yang/aipingtai</code></li>
+<li>远程分支：<code>main</code></li>
+<li>本地工作区：已同步、干净。</li>
+<li>远程已有 README 初始提交，已通过 rebase 合并。</li>
+<li>根目录 <code>.gitignore</code> 已忽略数据库目录、Redis 数据、日志、构建产物、环境文件、Node/Python 缓存和 <code>.workbuddy</code> 项目数据。</li>
+</ul>
+<h3 id="20-2-发布过程中解决的问题">20.2 发布过程中解决的问题</h3>
+<ul>
+<li>初始配置使用不可用代理。</li>
+<li>远程仓库已有独立初始历史。</li>
+<li>推送需要认证。</li>
+<li>通过 fetch/rebase 合并远程初始提交后完成推送。</li>
+</ul>
+<h3 id="20-3-强制安全动作">20.3 强制安全动作</h3>
+<p>历史过程中曾有 GitHub Personal Access Token 被直接发送到对话中。该 Token 已属于暴露凭据，必须：</p>
+<ol>
+<li>立即在 GitHub 中撤销。</li>
+<li>重新创建最小权限 Token。</li>
+<li>后续不要把 Token 粘贴到聊天、文档、日志或代码中。</li>
+<li>检查 GitHub Actions、shell 历史和本地 credential helper 是否残留。</li>
+<li>如果该 Token 曾具备仓库写权限，应检查仓库审计记录。</li>
+</ol>
+<p>本文没有写入该 Token，也不保留其内容。</p>
+<hr>
+<h2 id="21-当前已知限制与生产化差距">21. 当前已知限制与生产化差距</h2>
+<p class="heading-lead">本节围绕该主题说明平台的设计、实现与验收要点。</p><h3 id="21-1-真实上游成功回归仍依赖可达环境">21.1 真实上游成功回归仍依赖可达环境</h3>
+<p>当前环境对部分公网 OpenAI 端点访问超时，因此已重点验证：</p>
+<ul>
+<li>Provider/base URL 校验。</li>
+<li>代理绕过。</li>
+<li>401/402/403/404/429/5xx 分类。</li>
+<li>真实模型失败时不发送虚假的 <code>message_done</code>。</li>
+<li>deterministic 离线链路完整可用。</li>
+</ul>
+<p>要完成真实上游成功回归，需要在受控环境提供可达的 DeepSeek、OpenAI-compatible、Qwen 或 Ollama 服务，并注入合法 Key。</p>
+<h3 id="21-2-readiness-仍可继续加强">21.2 readiness 仍可继续加强</h3>
+<p>当前启动脚本已经检查端口和健康接口，但生产环境建议继续补充：</p>
+<ul>
+<li>MySQL SQL 查询就绪。</li>
+<li>Redis PING 就绪。</li>
+<li>Python 模型工厂配置就绪。</li>
+<li>Java 到 Python 的依赖检查。</li>
+<li>启动失败原因结构化输出。</li>
+<li>服务启动顺序和重试退避。</li>
+</ul>
+<h3 id="21-3-租户上下文统一">21.3 租户上下文统一</h3>
+<p>部分知识库、Usage、Audit、内部工具/技能接口仍存在历史上通过 <code>X-Tenant-Id</code> 或默认租户 1 获取租户的路径，后续应统一到 JWT <code>UserContext</code>，防止请求头篡改租户边界。</p>
+<h3 id="21-4-真实-mcp-server-生产兼容性">21.4 真实 MCP Server 生产兼容性</h3>
+<p>内置工具链路已验证；MCP SDK 适配代码已具备 stdio 和 Streamable HTTP 路径，但仍需要连接真实第三方 MCP Server 完成：</p>
+<ul>
+<li>认证配置。</li>
+<li>连接生命周期。</li>
+<li>工具动态发现。</li>
+<li>超时和断线重连。</li>
+<li>第三方 schema 差异。</li>
+<li>旧式 SSE transport 兼容性。</li>
+</ul>
+<h3 id="21-5-生产级模型弹性">21.5 生产级模型弹性</h3>
+<p>后续应补充：</p>
+<ul>
+<li>多供应商自动故障转移。</li>
+<li>重试与指数退避。</li>
+<li>熔断器。</li>
+<li>单用户/租户并发限制。</li>
+<li>上游模型健康评分。</li>
+<li>Token 成本按模型计价。</li>
+<li>请求取消真正传递到 Python 和上游。</li>
+</ul>
+<h3 id="21-6-rag-生产化">21.6 RAG 生产化</h3>
+<p>当前已有分块、检索和溯源闭环，后续可增强：</p>
+<ul>
+<li>文档上传格式扩展。</li>
+<li>OCR 和扫描件处理。</li>
+<li>Embedding 异步任务队列。</li>
+<li>pgvector HNSW 生产参数调优。</li>
+<li>混合检索与 rerank。</li>
+<li>文档版本与权限继承。</li>
+<li>删除后的向量清理。</li>
+</ul>
+<hr>
+<h2 id="22-后续路线图">22. 后续路线图</h2>
+<p class="heading-lead">本节围绕该主题说明平台的设计、实现与验收要点。</p><h3 id="p15-生产可用性加固">P15：生产可用性加固</h3>
+<ul>
+<li>统一 readiness。</li>
+<li>完善租户上下文。</li>
+<li>增加模型重试、熔断和降级。</li>
+<li>完善取消生成。</li>
+<li>增加安全扫描和依赖漏洞检查。</li>
+</ul>
+<h3 id="p16-真实-mcp-生态接入">P16：真实 MCP 生态接入</h3>
+<ul>
+<li>MCP Server 注册测试。</li>
+<li>凭据安全存储。</li>
+<li>stdio/HTTP 生命周期管理。</li>
+<li>工具版本和灰度发布。</li>
+</ul>
+<h3 id="p17-知识库生产化">P17：知识库生产化</h3>
+<ul>
+<li>多格式文件导入。</li>
+<li>异步解析与索引任务。</li>
+<li>pgvector 与混合检索。</li>
+<li>权限继承、版本管理和增量重索引。</li>
+</ul>
+<h3 id="p18-运营与计费">P18：运营与计费</h3>
+<ul>
+<li>按模型和租户成本计算。</li>
+<li>预算预警。</li>
+<li>用量报表导出。</li>
+<li>运营审计和管理员告警。</li>
+</ul>
+<h3 id="p19-微服务演进">P19：微服务演进</h3>
+<p>只有在团队、并发或发布节奏确实需要时，再将认证、会话、Agent 能力、知识库和运营拆分为独立服务。当前模块化单体已经通过 API 边界为拆分预留空间，不建议在早期无条件引入服务注册、网关和分布式事务。</p>
+<hr>
+<h2 id="23-交付验收清单">23. 交付验收清单</h2>
+<p class="heading-lead">本节围绕该主题说明平台的设计、实现与验收要点。</p><h3 id="功能验收">功能验收</h3>
+<ul>
+<li>[x] 登录和 Token 刷新。</li>
+<li>[x] 会话 CRUD、批量删除、一键清空。</li>
+<li>[x] deterministic 模型自然语言回答。</li>
+<li>[x] 请求级真实模型选择。</li>
+<li>[x] Agent 创建、发布、启停、删除。</li>
+<li>[x] Agent 模型/工具/技能/知识绑定。</li>
+<li>[x] 工具注册和调用。</li>
+<li>[x] 技能注册和 <code>.skillzip</code> 上传。</li>
+<li>[x] 代码执行沙箱。</li>
+<li>[x] 知识库检索和溯源。</li>
+<li>[x] 用量和审计。</li>
+<li>[x] 工具与技能工作台页面。</li>
+<li>[x] 聊天安全过程可视化。</li>
+</ul>
+<h3 id="安全验收">安全验收</h3>
+<ul>
+<li>[x] API Key 脱敏。</li>
+<li>[x] 原始 tool_calls 清理。</li>
+<li>[x] 历史上下文清洗。</li>
+<li>[x] Agent 运行时白名单。</li>
+<li>[x] 技能 allowed_tools 收窄。</li>
+<li>[x] skillzip 路径穿越拦截。</li>
+<li>[x] 危险扩展名拦截。</li>
+<li>[x] ZIP 大小和条目数限制。</li>
+<li>[x] 沙箱 AST 预检和进程隔离。</li>
+<li>[x] 审计和 traceId。</li>
+</ul>
+<h3 id="工程验收">工程验收</h3>
+<ul>
+<li>[x] Java 构建通过。</li>
+<li>[x] Python 测试通过。</li>
+<li>[x] 前端类型检查通过。</li>
+<li>[x] 前端生产构建通过。</li>
+<li>[x] 一键启动脚本可用。</li>
+<li>[x] E2E 冒烟测试。</li>
+<li>[x] E2E 全量回归。</li>
+<li>[x] 30 分钟稳定性巡检。</li>
+<li>[x] GitHub 源码发布完成。</li>
+</ul>
+<hr>
+<h2 id="24-结语">24. 结语</h2>
+<p>AgentForge 已从一个初始的登录、会话和 SSE 原型，逐步发展为覆盖模型、Agent、工具、技能、知识库、沙箱、审计、用量和部署的企业级 AI Agent 平台骨架。</p>
+<p>本次建设过程中最重要的工程成果并不是某一个页面或某一个 API，而是形成了几条可持续演进的边界：</p>
+<ol>
+<li>Java 负责业务数据和治理，Python 负责智能计算。</li>
+<li>模型、Agent、工具、技能和知识库通过显式契约连接。</li>
+<li>运行时权限使用白名单交集，而不是隐式放权。</li>
+<li>流式输出既面向用户体验，也面向审计和故障排查。</li>
+<li>模型失败、工具失败、技能失败和历史污染都有明确的安全处理方式。</li>
+<li>代码、测试、启动脚本和发布记录共同组成可交付系统。</li>
+</ol>
+<p>后续工作重点应从“功能闭环”转向“生产确定性”：统一租户上下文、加强 readiness、完成真实 MCP 和上游模型验收、完善 RAG 与成本运营，并在实际组织规模和并发需求出现后再进行微服务拆分。</p>
+<hr>
+<h2 id="附录-a-核心文件索引">附录 A：核心文件索引</h2>
+<table>
+<thead>
+<tr>
+<th>文件</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>backend/af-session-impl/.../ChatService.java</code></td>
+<td>会话、上下文、模型选择、SSE 中继、审计和落库</td>
+</tr>
+<tr>
+<td><code>agent-engine/app/graph/agent_graph.py</code></td>
+<td>LangGraph 状态图、技能/工具路由、Agent runtime</td>
+</tr>
+<tr>
+<td><code>agent-engine/app/model/openai_compatible.py</code></td>
+<td>真实模型适配、URL 规范化、错误分类、tool_calls 清理</td>
+</tr>
+<tr>
+<td><code>agent-engine/app/main.py</code></td>
+<td>Python 健康、聊天 NDJSON、知识库接口</td>
+</tr>
+<tr>
+<td><code>backend/af-agent/.../SkillPackageService.java</code></td>
+<td>skillzip 解压、校验、事务、租户落盘</td>
+</tr>
+<tr>
+<td><code>backend/af-agent/.../AgentController.java</code></td>
+<td>Agent CRUD、发布、状态和 runtime</td>
+</tr>
+<tr>
+<td><code>backend/af-agent/.../ToolController.java</code></td>
+<td>工具与 MCP Server 治理</td>
+</tr>
+<tr>
+<td><code>backend/af-agent/.../SkillController.java</code></td>
+<td>技能 CRUD 和上传</td>
+</tr>
+<tr>
+<td><code>frontend/src/views/workspace/chat/ChatView.vue</code></td>
+<td>会话和聊天工作台</td>
+</tr>
+<tr>
+<td><code>frontend/src/views/workspace/agents/AgentManageView.vue</code></td>
+<td>Agent 管理页面</td>
+</tr>
+<tr>
+<td><code>frontend/src/views/workspace/tools/ToolsView.vue</code></td>
+<td>工具与技能页面</td>
+</tr>
+<tr>
+<td><code>frontend/src/views/workspace/models/ModelManageView.vue</code></td>
+<td>模型配置页面</td>
+</tr>
+<tr>
+<td><code>frontend/src/views/workspace/knowledge/KnowledgeView.vue</code></td>
+<td>知识库页面</td>
+</tr>
+<tr>
+<td><code>frontend/src/views/workspace/obs/ObservabilityView.vue</code></td>
+<td>可观测页面</td>
+</tr>
+<tr>
+<td><code>frontend/src/utils/request.ts</code></td>
+<td>Token、刷新队列、错误处理、traceId</td>
+</tr>
+<tr>
+<td><code>backend/sql/01-mysql-schema.sql</code></td>
+<td>MySQL 业务表和种子</td>
+</tr>
+<tr>
+<td><code>backend/sql/02-postgres-vector.sql</code></td>
+<td>PostgreSQL/pgvector 设计</td>
+</tr>
+<tr>
+<td><code>docs/03-Redis设计.md</code></td>
+<td>Redis Key 和缓存策略</td>
+</tr>
+<tr>
+<td><code>scripts/start-all.sh</code></td>
+<td>五端幂等启动</td>
+</tr>
+<tr>
+<td><code>tests/e2e-smoke.sh</code></td>
+<td>冒烟测试</td>
+</tr>
+<tr>
+<td><code>tests/e2e-full.sh</code></td>
+<td>全量回归</td>
+</tr>
+<tr>
+<td><code>tests/soak-30m.sh</code></td>
+<td>稳定性巡检</td>
+</tr>
+</tbody>
+</table>
+<h2 id="附录-b-敏感信息替换规范">附录 B：敏感信息替换规范</h2>
+<p>以下内容禁止写入公开文档、Git 仓库或普通日志：</p>
+<pre><code class="language-text">&lt;DEEPSEEK_API_KEY&gt;
+&lt;OPENAI_API_KEY&gt;
+&lt;GITHUB_TOKEN&gt;
+&lt;JWT_SECRET&gt;
+&lt;REFRESH_TOKEN&gt;
+&lt;MYSQL_PASSWORD&gt;
+&lt;SMTP_PASSWORD&gt;
+&lt;MCP_CREDENTIAL&gt;
+</code></pre>
+<p>如果需要提供可运行配置，应通过本地 <code>.env</code>、系统密钥管理器或部署平台 Secret 注入，并确保 <code>.env</code> 已被 <code>.gitignore</code> 忽略。</p>
+</section>
+</body>
+</html>

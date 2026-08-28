@@ -90,7 +90,8 @@ class AgentGraph:
             (message for message in reversed(state["messages"]) if isinstance(message, HumanMessage)),
             HumanMessage(content=""),
         )
-        prompt = self._latest_user_prompt(str(last_human.content))
+        full_history = str(last_human.content)
+        prompt = self._latest_user_prompt(full_history)
         system_prompt = str(state.get("system_prompt", "")).strip()
         if system_prompt:
             prompt = f"系统指令：{system_prompt}\n\n用户请求：{prompt}"
@@ -114,7 +115,11 @@ class AgentGraph:
                 arguments = dict(plan.get("arguments", {}))
                 if plan.get("tool_code") == "knowledge_search":
                     allowed_docs = state.get("knowledge_doc_ids", [])
-                    arguments["doc_ids"] = list(allowed_docs)
+                    # 空列表表示不额外限制，与 AgentRuntimeConfig 注释一致；不传 doc_ids 避免校验失败
+                    if allowed_docs:
+                        arguments["doc_ids"] = list(allowed_docs)
+                    else:
+                        arguments.pop("doc_ids", None)
                 return {
                     "pending_tool_call": {
                         "call_id": uuid.uuid4().hex,
@@ -124,8 +129,17 @@ class AgentGraph:
                     "tool_rounds": state.get("tool_rounds", 0) + 1,
                 }
 
-        # 3) 普通回复
-        return {"messages": [AIMessage(content=self.model.build_reply(prompt))]}
+        # 3) 普通回复：把完整历史上下文（含此前多轮对话）喂给模型，
+        # 而不是只传当前问题，避免大模型"失忆"。
+        final_prompt = full_history
+        if system_prompt:
+            final_prompt = f"系统指令：{system_prompt}\n\n{full_history}"
+        full = self.model.build_reply_with_reasoning(final_prompt)
+        reply = AIMessage(content=full.get("content", ""))
+        reasoning = full.get("reasoning") or ""
+        if reasoning:
+            reply.additional_kwargs["reasoning_content"] = reasoning
+        return {"messages": [reply]}
 
     def _skill_start_node(self, state: AgentState) -> dict[str, Any]:
         # 单独节点：确保 skill_call_start 事件在真正执行前发出
@@ -245,13 +259,13 @@ class AgentGraph:
             try:
                 descriptors = await self.tool_gateway.list_tools(tenant_id)
                 allowed_tool_ids = set((agent_config or {}).get("tool_ids") or [])
-                if agent_config is not None:
+                if agent_config is not None and allowed_tool_ids:
                     descriptors = [tool for tool in descriptors if tool.id in allowed_tool_ids]
                 descriptor_dicts = [tool.model_dump() for tool in descriptors]
                 descriptor_names = {tool.code: tool.name for tool in descriptors}
                 skills = await self.skill_engine.list_skills(tenant_id)
                 allowed_skill_ids = set((agent_config or {}).get("skill_ids") or [])
-                if agent_config is not None:
+                if agent_config is not None and allowed_skill_ids:
                     skills = [skill for skill in skills if skill.id in allowed_skill_ids]
                 skill_dicts = [skill.model_dump() for skill in skills]
                 skill_names = {skill.code: skill.name for skill in skills}
@@ -348,6 +362,9 @@ class AgentGraph:
                     if "agent" in update:
                         messages = update["agent"].get("messages", [])
                         if messages and isinstance(messages[-1], AIMessage):
+                            reasoning = (messages[-1].additional_kwargs or {}).get("reasoning_content", "")
+                            if reasoning:
+                                yield {"type": "reasoning", "data": {"content": reasoning}}
                             yield {"type": "assistant_final", "data": {"content": str(messages[-1].content)}}
             finally:
                 self.model = prev_model

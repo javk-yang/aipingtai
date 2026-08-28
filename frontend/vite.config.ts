@@ -12,7 +12,8 @@ export default defineConfig({
     },
   },
   server: {
-    port: 5173,
+    // 5173 已被另一个本地工作区占用，AgentForge 固定使用隔离端口 5175。
+    port: 5175,
     headers: {
       // 开发模式下禁用浏览器缓存，避免 HMR / 旧 JS 导致功能看起来未生效
       'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',

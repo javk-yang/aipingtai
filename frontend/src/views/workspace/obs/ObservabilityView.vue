@@ -555,4 +555,21 @@ onMounted(() => {
   font-size: var(--text-sm);
   color: var(--color-danger);
 }
+/* ---- 观测暗房：让数据成为一条可读的信号轨迹 ---- */
+.obs { padding: clamp(20px, 3vw, 36px); gap: 20px; background: var(--color-bg); }
+.obs-grid { gap: 12px; }
+.stat-card { position: relative; min-height: 132px; padding: 18px; overflow: hidden; border-radius: var(--radius-lg); background: var(--color-surface-raised); box-shadow: 0 1px 0 rgba(255,255,255,.35) inset; transition: transform var(--transition-fast), box-shadow var(--transition-fast); }
+.stat-card::after { content: ''; position: absolute; right: -18px; bottom: -23px; width: 84px; height: 84px; border: 1px solid var(--color-border); border-radius: 50%; opacity: .75; }
+.stat-card:nth-child(1)::before,.stat-card:nth-child(2)::before,.stat-card:nth-child(3)::before,.stat-card:nth-child(4)::before { content: ''; position: absolute; top: 0; left: 18px; width: 34px; height: 3px; background: var(--color-spectrum-a); }
+.stat-card:nth-child(2)::before { background: var(--color-spectrum-b); }.stat-card:nth-child(3)::before { background: var(--color-spectrum-c); }.stat-card:nth-child(4)::before { background: var(--color-spectrum-e); }
+.stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-float); }
+.stat-value { font-size: clamp(25px, 2.7vw, 34px); }.stat-value.cost { font-size: clamp(19px, 2.3vw, 28px); }
+.panel { position: relative; padding: 18px; border-radius: var(--radius-lg); background: var(--color-surface-raised); box-shadow: 0 1px 0 rgba(255,255,255,.35) inset; }
+.panel-head { padding-bottom: 12px; margin-bottom: 14px; border-bottom: 1px solid var(--color-border); }.panel-title { font-size: var(--text-lg); }
+.quota-bar { height: 10px; background: var(--color-surface-2); }.quota-fill { background: var(--color-lifeline); }
+.trend-svg { color: var(--color-spectrum-d); }.trend-line { stroke-width: 2.2; }.trend-dot { fill: var(--color-surface-raised); stroke-width: 2; }
+.table-wrap { margin: 0 -6px; padding: 0 6px; }.audit-table th { padding: 9px 10px; background: var(--color-surface-2); }.audit-table tbody tr { transition: background var(--transition-fast); }.audit-table tr:hover td { background: color-mix(in srgb, var(--color-spectrum-d) 6%, var(--color-surface-raised)); }
+.action-chip { background: var(--color-bg-elevated); }.status-chip.ok { background: var(--color-success-bg); }.pager { padding-top: 10px; }
+@media (max-width: 900px) { .obs-grid { grid-template-columns: repeat(2, 1fr); } .quota-meta { gap: 8px; flex-direction: column; } }
+@media (max-width: 520px) { .obs-grid { grid-template-columns: 1fr; } .panel-head { align-items: flex-start; gap: 10px; flex-direction: column; } .panel-tools { width: 100%; justify-content: space-between; } }
 </style>

@@ -34,6 +34,7 @@ export interface MessageResponse {
 export type ChatEventType =
   | 'message_start'
   | 'content_delta'
+  | 'reasoning'
   | 'tool_call_start'
   | 'tool_call_result'
   | 'tool_call_error'

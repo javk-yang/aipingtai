@@ -1,0 +1,67 @@
+request_id: agentforge-platform-documentation-enhanced
+entry_type: full_pipeline
+intent_length: 22
+current_stage: 3
+security:
+  secrets_redacted: true
+  notes:
+    - Enhanced document is based on v1.0 and contains no real API keys, GitHub token, refresh token, JWT secret or database password.
+stage_1:
+  status: completed
+  completed_at: 2026-08-25T16:47:00+08:00
+  executor: doc-writer
+  expert_used: tech-blog-expert
+  route_tag: expert_tech_blog
+  genre: project-docs
+  baseline_path: ../agentforge-platform-documentation/stage1/final_draft.md
+  output_path: stage1/final_draft-enhanced.md
+  output_format: markdown
+  fallback: false
+  notes:
+    - Preserved the v1.0 baseline and added implementation-level technical appendices.
+    - Added requirements traceability, invariants, lifecycle, request sequencing, contracts, security, testing and production hardening.
+stage_2:
+  status: completed
+  completed_at: 2026-08-25T16:39:00+08:00
+  executor: doc-formatter
+  route: html
+  html_sub: template
+  genre: business-report
+  output_path: stage2/formatted-agentforge-platform-enhanced.html
+  output_format: html
+  template_used: business-report
+  skills_invoked:
+    - design-token
+    - doc-typeset
+    - html-review
+  html_review_attempts: 0
+  review_score: 96
+  review_passed: true
+  fallback: false
+  notes:
+    - Security, structural integrity, genre fit and decoration checks passed.
+    - Typographic reviewer only reported non-blocking fragmentation warnings for the intentionally expanded long-form document.
+stage_3:
+  status: completed
+  completed_at: 2026-08-25T16:47:43+08:00
+  executor: doc-converter
+  input_format: html
+  input_path: stage2/formatted-agentforge-platform-enhanced.html
+  output_path: stage3/output-enhanced.docx
+  output_format: docx
+  skill_used:
+    - html-to-docx
+  present_files_opened: true
+  fallback: false
+  fallback_reason: null
+  warnings: []
+consistency_check:
+  status: passed
+  checks:
+    - baseline_document_preserved
+    - enhanced_markdown_exists
+    - enhanced_html_exists
+    - enhanced_docx_exists
+    - html_review_passed
+    - secrets_redacted
+    - docx_conversion_successful

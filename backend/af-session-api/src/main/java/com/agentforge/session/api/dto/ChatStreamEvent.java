@@ -61,6 +61,8 @@ public class ChatStreamEvent implements Serializable {
     public static final String TYPE_MESSAGE_DONE = "message_done";
     public static final String TYPE_ERROR = "error";
     public static final String TYPE_PING = "ping";
+    /** 模型思维链（reasoning_content）事件 */
+    public static final String TYPE_REASONING = "reasoning";
 
     /** 便捷构造: type + conversationId + data(其余字段后置填充) */
     public static ChatStreamEvent of(String type, String conversationId, Object data) {

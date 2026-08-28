@@ -71,6 +71,7 @@ async def chat_stream(
                 if event_type in {
                     "tool_call_start", "tool_call_result", "tool_call_error",
                     "skill_call_start", "skill_call_result", "skill_call_error",
+                    "reasoning",
                 }:
                     yield EngineEvent(
                         type=event_type,

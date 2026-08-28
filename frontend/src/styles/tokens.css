@@ -1,136 +1,137 @@
 /* ============================================================
- * AgentForge 设计令牌（Design Tokens）
- * P0.5 已锁定的唯一颜色事实源：组件里禁止出现任何裸色值
- *
- * 核心机制：
- *   :root 定义两个主题共享的"形状令牌"（字号/间距/圆角/字重）
- *   :root 默认 = 浅色语义色；[data-theme="dark"] 只覆盖颜色变量
- *   主题切换 = 切换 html[data-theme] → 全站颜色自动跟随
- *
- * 命名铁律：语义命名（背景/表面/正文/边框）而非颜色命名（白/黑），
- *           否则换主题时语义错位、代码里全是 magic color
+ * AgentForge 设计令牌
+ * 视觉方向：摄影暗房质感 + 光谱生命线 + 克制的专业工作台
+ * 组件只引用语义令牌，禁止在业务组件中散落裸色值。
  * ============================================================ */
 
-/* ---------- 形状令牌（双主题共享，不随主题变化） ---------- */
 :root {
-  /* 字体族 */
-  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+  /* 字体 */
+  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', 'PingFang SC',
     'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Arial, sans-serif;
   --font-mono: 'SF Mono', 'JetBrains Mono', 'Fira Code', ui-monospace, Consolas,
     'Courier New', monospace;
 
-  /* 字号阶梯：11px 大写小标签 → 20px 页面标题 */
+  /* 排版 */
   --text-xs: 11px;
   --text-sm: 12px;
   --text-base: 13px;
   --text-md: 14px;
   --text-lg: 16px;
-  --text-xl: 20px;
-
-  /* 字重：克制，只用 400/500/600 三档 */
+  --text-xl: 21px;
   --weight-regular: 400;
   --weight-medium: 500;
   --weight-semibold: 600;
+  --tracking-tight: -0.025em;
+  --tracking-label: 0.12em;
 
-  /* 标题字距：收紧出高级感（Vercel/Linear 特征） */
-  --tracking-tight: -0.02em;
-  --tracking-label: 0.08em;
-
-  /* 间距阶梯 */
+  /* 空间与形状 */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
   --space-4: 16px;
+  --space-5: 20px;
   --space-6: 24px;
   --space-8: 32px;
   --space-12: 48px;
-
-  /* 圆角：控件 6 / 卡片 8 / 弹层 12 */
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-
-  /* 控件高度：36px 标准输入/按钮，40px 大按钮 */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-pill: 999px;
   --control-height: 36px;
   --control-height-lg: 40px;
-
-  /* 布局 */
-  --sidebar-width: 248px;
+  --sidebar-width: 264px;
   --sidebar-collapsed: 56px;
-  --topbar-height: 52px;
+  --topbar-height: 62px;
   --aside-width: 312px;
 
-  /* 动效 */
-  --transition-fast: 120ms ease;
-  --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  /* 节奏 */
+  --transition-fast: 160ms cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-base: 260ms cubic-bezier(0.16, 1, 0.3, 1);
+  --shadow-modal: 0 24px 70px rgba(35, 27, 20, 0.14);
+  --shadow-menu: 0 12px 30px rgba(35, 27, 20, 0.08);
+  --shadow-float: 0 10px 36px rgba(35, 27, 20, 0.07);
 
-  /* 阴影：单色场景下只用极淡的浮层阴影，不用彩色 */
-  --shadow-modal: 0 16px 48px rgba(0, 0, 0, 0.12);
-  --shadow-menu: 0 4px 16px rgba(0, 0, 0, 0.06);
+  /* 生命线：色彩只作为方向、状态与节奏，而非大面积装饰 */
+  --color-spectrum-a: #ec6c54;
+  --color-spectrum-b: #dc9d45;
+  --color-spectrum-c: #7cae75;
+  --color-spectrum-d: #5d9ab8;
+  --color-spectrum-e: #9873bb;
+  --color-lifeline: linear-gradient(90deg, var(--color-spectrum-a), var(--color-spectrum-b), var(--color-spectrum-c), var(--color-spectrum-d), var(--color-spectrum-e));
+  --color-lifeline-soft: linear-gradient(90deg, color-mix(in srgb, var(--color-spectrum-a) 14%, transparent), color-mix(in srgb, var(--color-spectrum-d) 12%, transparent), color-mix(in srgb, var(--color-spectrum-e) 12%, transparent));
 
-  /* ---------- 语义色（浅色主题默认值） ---------- */
-  --color-bg: #fafafa;            /* 页面背景 */
-  --color-surface: #ffffff;       /* 卡片/面板表面 */
-  --color-surface-2: #f4f4f5;     /* 次级面：悬停、输入框底 */
-  --color-text: #09090b;          /* 正文（近黑） */
-  --color-text-secondary: #52525b;/* 次级文字 */
-  --color-text-tertiary: #a1a1aa; /* 弱化/占位 */
-  --color-border: #ececef;        /* hairline 发丝线（~6% 对比度） */
-  --color-border-strong: #d4d4d8; /* 强边框：输入框聚焦、分隔强调 */
-  --color-primary: #09090b;       /* 近黑按钮（浅色主题） */
-  --color-on-primary: #fafafa;    /* 近黑按钮上的文字 */
-  --color-danger: #dc2626;
-  --color-danger-bg: #fef2f2;
+  /* 浅色：暖灰纸张与摄影冲印台层次 */
+  --color-bg: #f4f3ef;
+  --color-bg-elevated: #eeece6;
+  --color-surface: #fbfaf7;
+  --color-surface-raised: #ffffff;
+  --color-surface-2: #f0eee8;
+  --color-text: #22211f;
+  --color-text-secondary: #69655e;
+  --color-text-tertiary: #9b968d;
+  --color-border: #e4e0d8;
+  --color-border-strong: #c9c2b7;
+  --color-primary: #24231f;
+  --color-on-primary: #faf9f5;
+  --color-danger: #c65147;
+  --color-danger-bg: #fbefec;
   --color-on-danger: #ffffff;
-  --color-success: #16a34a;
-  --color-warning: #d97706;
+  --color-success: #5d9166;
+  --color-success-bg: #edf5ec;
+  --color-warning: #bd8131;
+  --color-warning-bg: #faf2e5;
+  --color-focus: #5d9ab8;
+  --color-icon-bg: #ebe8e1;
+  --color-grid: rgba(75, 66, 56, 0.055);
 
-  /* 滚动条 */
   --scrollbar-size: 8px;
-  --scrollbar-thumb: #d4d4d8;
+  --scrollbar-thumb: #cbc5bb;
   --scrollbar-track: transparent;
 
-  /* 代码高亮（AfMarkdown 代码块） */
-  --code-bg: #f6f8fa;            /* 代码块底色 */
-  --code-keyword: #a626a4;       /* 关键字 */
-  --code-string: #50a14f;        /* 字符串 */
-  --code-number: #986801;        /* 数字 */
-  --code-comment: #a0a1a7;       /* 注释 */
-  --code-func: #4078f2;          /* 函数名 */
-  --code-punct: #383a42;         /* 标点/变量 */
+  --code-bg: #f1efea;
+  --code-keyword: #9a4d7d;
+  --code-string: #4c8764;
+  --code-number: #a66d24;
+  --code-comment: #9b968d;
+  --code-func: #387896;
+  --code-punct: #49463f;
 }
 
-/* ---------- 深色主题：只覆盖颜色变量，形状令牌全部继承 ---------- */
 [data-theme='dark'] {
-  --color-bg: #0a0a0b;
-  --color-surface: #111113;
-  --color-surface-2: #18181b;
-  --color-text: #fafafa;          /* 近白正文 */
-  --color-text-secondary: #a1a1aa;
-  --color-text-tertiary: #71717a;
-  --color-border: #222225;        /* hairline 暗色版 */
-  --color-border-strong: #3f3f46;
-  --color-primary: #fafafa;       /* 近白按钮（深色主题） */
-  --color-on-primary: #09090b;
-  --color-danger: #f87171;
-  --color-danger-bg: #1f1215;
-  --color-on-danger: #09090b;
-  --color-success: #4ade80;
-  --color-warning: #fbbf24;
+  /* 深色：不是纯黑，而是暗房炭黑 */
+  --color-bg: #171716;
+  --color-bg-elevated: #1c1c1a;
+  --color-surface: #20201e;
+  --color-surface-raised: #272624;
+  --color-surface-2: #2a2926;
+  --color-text: #f1eee8;
+  --color-text-secondary: #b9b3a9;
+  --color-text-tertiary: #7f7a72;
+  --color-border: #35332f;
+  --color-border-strong: #565149;
+  --color-primary: #ece8df;
+  --color-on-primary: #1a1a18;
+  --color-danger: #e38073;
+  --color-danger-bg: #35201e;
+  --color-on-danger: #1a1a18;
+  --color-success: #8cbf8a;
+  --color-success-bg: #1f3021;
+  --color-warning: #e1aa5a;
+  --color-warning-bg: #342a1d;
+  --color-focus: #78b5d1;
+  --color-icon-bg: #302f2c;
+  --color-grid: rgba(255, 250, 240, 0.045);
 
-  --shadow-modal: 0 16px 48px rgba(0, 0, 0, 0.6);
-  --shadow-menu: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --shadow-modal: 0 24px 70px rgba(0, 0, 0, 0.45);
+  --shadow-menu: 0 12px 30px rgba(0, 0, 0, 0.3);
+  --shadow-float: 0 10px 36px rgba(0, 0, 0, 0.24);
+  --scrollbar-thumb: #514e48;
 
-  --scrollbar-thumb: #3f3f46;
-}
-
-/* ---------- 深色主题代码高亮 ---------- */
-[data-theme='dark'] {
-  --code-bg: #16161a;
-  --code-keyword: #c678dd;
-  --code-string: #98c379;
-  --code-number: #d19a66;
-  --code-comment: #7f848e;
-  --code-func: #61afef;
-  --code-punct: #abb2bf;
+  --code-bg: #292826;
+  --code-keyword: #dc9cc6;
+  --code-string: #93c78e;
+  --code-number: #dfab63;
+  --code-comment: #837d73;
+  --code-func: #7dc1e2;
+  --code-punct: #d0cbc1;
 }

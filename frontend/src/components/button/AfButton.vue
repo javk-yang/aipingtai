@@ -57,65 +57,36 @@ const cls = computed(() => [
 
 <style scoped>
 .af-btn {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
+  border: 1px solid transparent;
   border-radius: var(--radius-sm);
   font-weight: var(--weight-medium);
   letter-spacing: var(--tracking-tight);
   white-space: nowrap;
-  transition: opacity var(--transition-fast), background-color var(--transition-fast),
-    border-color var(--transition-fast), color var(--transition-fast);
+  transition: opacity var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
   user-select: none;
 }
-.af-btn:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
+.af-btn:not(:disabled):active { transform: scale(0.98); }
+.af-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
-/* 尺寸 */
-.af-btn--sm { height: 28px; padding: 0 10px; font-size: var(--text-sm); }
-.af-btn--md { height: var(--control-height); padding: 0 16px; font-size: var(--text-base); }
-.af-btn--lg { height: var(--control-height-lg); padding: 0 24px; font-size: var(--text-md); }
+.af-btn--sm { height: 28px; padding: 0 9px; font-size: var(--text-xs); }
+.af-btn--md { height: 34px; padding: 0 13px; font-size: var(--text-base); }
+.af-btn--lg { height: var(--control-height-lg); padding: 0 20px; font-size: var(--text-md); }
 .af-btn--block { width: 100%; }
 
-/* 变体 */
-.af-btn--primary {
-  background-color: var(--color-primary);
-  color: var(--color-on-primary);
-}
-.af-btn--primary:not(:disabled):hover { opacity: 0.85; }
-
-.af-btn--secondary {
-  background-color: var(--color-surface);
-  color: var(--color-text);
-  border: 1px solid var(--color-border);
-}
-.af-btn--secondary:not(:disabled):hover { background-color: var(--color-surface-2); }
-
-.af-btn--ghost {
-  background: transparent;
-  color: var(--color-text-secondary);
-}
+.af-btn--primary { background-color: var(--color-primary); color: var(--color-on-primary); box-shadow: 0 5px 14px color-mix(in srgb, var(--color-primary) 14%, transparent); }
+.af-btn--primary:not(:disabled):hover { opacity: 0.88; transform: translateY(-1px); }
+.af-btn--secondary { background-color: var(--color-surface-raised); color: var(--color-text); border-color: var(--color-border); }
+.af-btn--secondary:not(:disabled):hover { background-color: var(--color-surface-2); border-color: var(--color-border-strong); }
+.af-btn--ghost { background: transparent; color: var(--color-text-secondary); }
 .af-btn--ghost:not(:disabled):hover { color: var(--color-text); background-color: var(--color-surface-2); }
+.af-btn--danger { background-color: var(--color-danger); color: var(--color-on-danger); }
+.af-btn--danger:not(:disabled):hover { opacity: 0.88; transform: translateY(-1px); }
 
-.af-btn--danger {
-  background-color: var(--color-danger);
-  color: var(--color-on-danger);
-}
-.af-btn--danger:not(:disabled):hover { opacity: 0.85; }
-
-/* loading 转圈：纯 CSS 环形，无额外图标依赖 */
-.af-btn__spinner {
-  width: 14px;
-  height: 14px;
-  border: 1.5px solid currentColor;
-  border-top-color: transparent;
-  border-radius: 50%;
-  animation: af-spin 0.7s linear infinite;
-}
-@keyframes af-spin {
-  to { transform: rotate(360deg); }
-}
+.af-btn__spinner { width: 14px; height: 14px; border: 1.5px solid currentColor; border-top-color: transparent; border-radius: 50%; animation: af-spin 0.7s linear infinite; }
+@keyframes af-spin { to { transform: rotate(360deg); } }
 </style>

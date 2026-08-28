@@ -32,11 +32,13 @@ public interface AgentEngineClient {
      * @param onDelta         每产生一段文本调用一次
      * @param onToolEvent     工具生命周期事件（tool_call_start/result/error）
      * @param onSkillEvent    技能生命周期事件（skill_call_start/result/error）
+     * @param onReasoning     模型思维链（reasoning_content）回调，无思维链时不被调用
      */
     StreamResult stream(String prompt, String conversationId, String traceId, Long tenantId,
                         Map<String, Object> llmConfig,
                         Map<String, Object> agentConfig,
                         Consumer<String> onDelta,
                         Consumer<ToolStreamEvent> onToolEvent,
-                        Consumer<SkillStreamEvent> onSkillEvent) throws Exception;
+                        Consumer<SkillStreamEvent> onSkillEvent,
+                        Consumer<String> onReasoning) throws Exception;
 }

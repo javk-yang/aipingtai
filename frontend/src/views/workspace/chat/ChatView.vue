@@ -12,7 +12,7 @@
  *   message_start → content_delta* → (tool_call_* | skill_call_*)* → message_done
  *   任一步失败 → error 事件，assistant 消息标记 status=2
  */
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { conversationApi, chatStream } from '@/api/session'
 import { modelsApi } from '@/api/models'
 import { agentsApi, type AgentResponse } from '@/api/agents'
@@ -56,6 +56,27 @@ const input = ref('')
 const streaming = ref(false)
 const scrollEl = ref<HTMLElement | null>(null)
 const inputEl = ref<HTMLTextAreaElement | null>(null)
+/** 是否在工具时间线中展开知识库检索（RAG）的完整召回内容（默认关闭，仅展示检索轨迹摘要） */
+const showProcess = ref(false)
+/** 模型思维链（推理过程）按消息 ID 存储 */
+const reasoningByMsg = ref<Record<number, string>>({})
+/** 当前正在流式生成的 assistant 消息真实 ID（message_start 后从临时 ID 迁移而来） */
+const currentAssistantId = ref<number | null>(null)
+
+/** 判断是否为知识库检索类工具（RAG）：其召回内容默认不展开，避免长文本刷屏 */
+function isKnowledgeTool(call: ToolCallView): boolean {
+  const code = (call.toolCode || '').toLowerCase()
+  const name = call.toolName || ''
+  return code === 'knowledge_search' || code.includes('knowledge') || name.includes('检索') || name.includes('知识库') || name.includes('RAG')
+}
+
+/** 知识检索工具的结果摘要：不铺开召回内容，仅提示命中数量 */
+function knowledgeSummary(result: unknown): string {
+  const obj = result && typeof result === 'object' ? (result as Record<string, unknown>) : null
+  const arr = obj && Array.isArray(obj.results) ? (obj.results as unknown[]) : null
+  const n = arr ? arr.length : 0
+  return n > 0 ? `已检索知识库，命中 ${n} 条相关片段，已用于生成回答` : '已检索知识库'
+}
 
 /* ---------- 模型选择（#87：大模型可选择） ---------- */
 const models = ref<ModelConfig[]>([])
@@ -63,7 +84,9 @@ const activeModelId = ref<number | null>(null)
 const agents = ref<AgentResponse[]>([])
 const activeAgentId = ref<number | null>(null)
 const modelsLoading = ref(false)
+const agentsLoading = ref(false)
 const modelsError = ref('')
+const agentsError = ref('')
 const conversationError = ref('')
 const conversationLoading = ref(false)
 const modelSwitchTip = ref('')
@@ -178,14 +201,22 @@ async function removeAllConversations() {
   }
 }
 async function loadAgents() {
+  agentsLoading.value = true
+  agentsError.value = ''
   try {
     const list = await agentsApi.list()
     agents.value = list.filter((agent) => agent.status === 2)
     const defaultAgent = agents.value.find((agent) => agent.isDefault === 1)
     activeAgentId.value = defaultAgent?.id ?? null
-  } catch {
+    if (list.length > 0 && agents.value.length === 0) {
+      agentsError.value = '暂无已发布的智能体，请先在「智能体」页面发布后再选择。'
+    }
+  } catch (e) {
     agents.value = []
     activeAgentId.value = null
+    agentsError.value = e instanceof Error ? e.message : '智能体列表加载失败'
+  } finally {
+    agentsLoading.value = false
   }
 }
 
@@ -195,14 +226,13 @@ async function loadModels() {
   try {
     const list = await modelsApi.list()
     models.value = list
-    // 默认选中：优先用户设置的默认模型，其次是第一个启用模型，最后兜底列表第一项。
-    // 真实模型已连通，不再强制切到离线模型。
-    const enabled = list.filter((m) => m.enabled === 1)
-    const def =
-      enabled.find((m) => m.isDefault === 1) ??
-      enabled[0] ??
-      list[0]
-    activeModelId.value = def ? def.id : null
+    // 仅当当前未选模型或所选模型已不在列表中时，才回退到默认模型；
+    // 已选中的有效模型（例如 Agent 绑定的模型）予以保留，避免覆盖 Agent 回填。
+    if (activeModelId.value == null || !list.some((m) => m.id === activeModelId.value)) {
+      const enabled = list.filter((m) => m.enabled === 1)
+      const def = enabled.find((m) => m.isDefault === 1) ?? enabled[0] ?? list[0]
+      activeModelId.value = def ? def.id : null
+    }
   } catch (e) {
     models.value = []
     activeModelId.value = null
@@ -211,6 +241,25 @@ async function loadModels() {
     modelsLoading.value = false
   }
 }
+
+// 切换智能体时，将模型下拉框回填为该 Agent 绑定的默认模型（回单模型）。
+// 若 Agent 未绑定模型，则保留用户当前选择（无效时回退默认）。
+function syncModelToAgent() {
+  const agent = agents.value.find((a) => a.id === activeAgentId.value)
+  if (agent && agent.modelConfigId != null) {
+    if (models.value.some((m) => m.id === agent.modelConfigId)) {
+      activeModelId.value = agent.modelConfigId
+      return
+    }
+  }
+  if (activeModelId.value == null || !models.value.some((m) => m.id === activeModelId.value)) {
+    const enabled = models.value.filter((m) => m.enabled === 1)
+    const def = enabled.find((m) => m.isDefault === 1) ?? enabled[0] ?? models.value[0]
+    activeModelId.value = def ? def.id : null
+  }
+}
+
+watch(activeAgentId, syncModelToAgent)
 
 /** 当前选中模型名称（用于输入框旁展示） */
 const activeModelName = computed(() => {
@@ -247,6 +296,9 @@ async function openConversation(id: string) {
   conversationError.value = ''
   try {
     activeId.value = id
+    const conversation = conversations.value.find((item) => item.id === id)
+    // 已绑定 Agent 的会话必须沿用其配置；未绑定的会话允许在输入区选择并在首条消息时绑定。
+    activeAgentId.value = conversation?.agentId ?? null
     toolCalls.value = {}
     skillCalls.value = {}
     const list = await conversationApi.messages(id)
@@ -267,7 +319,8 @@ async function openConversation(id: string) {
 async function newConversation() {
   conversationError.value = ''
   try {
-    const conv = await conversationApi.create()
+    // 将当前选择的 Agent 在建会话时固化，后续该会话稳定使用同一智能体。
+    const conv = await conversationApi.create(activeAgentId.value ?? undefined)
     await loadConversations()
     await openConversation(conv.id)
   } catch (e) {
@@ -359,6 +412,7 @@ async function send() {
 
   pushUser(text)
   const assistantId = pushAssistant()
+  currentAssistantId.value = assistantId
   streaming.value = true
   const hadConv = !!activeId.value
 
@@ -386,6 +440,7 @@ async function send() {
             delete toolCalls.value[assistantId]
             delete skillCalls.value[assistantId]
             msg.id = e.data.messageId
+            currentAssistantId.value = e.data.messageId
             thinkingSteps.value[e.data.messageId] = thinkingSteps.value[assistantId] ?? []
             expandedThinking.value[e.data.messageId] = expandedThinking.value[assistantId] ?? true
             delete thinkingSteps.value[assistantId]
@@ -455,6 +510,9 @@ async function send() {
               e.type === 'skill_call_result' ? `${call.skillName} 已完成` : call.errorMessage,
             )
           }
+        } else if (e.type === 'reasoning' && e.data?.content) {
+          const rid = currentAssistantId.value ?? msg.id
+          reasoningByMsg.value[rid] = String(e.data.content)
         } else if (e.type === 'message_done') {
           finishThinking(msg.id, 'done')
           msg.status = 1
@@ -579,6 +637,7 @@ function useSuggestion(text: string) {
 onMounted(async () => {
   await loadAgents()
   await loadModels()
+  syncModelToAgent()
   await loadConversations()
   if (conversations.value.length) {
     await openConversation(conversations.value[0].id)
@@ -642,6 +701,7 @@ onBeforeUnmount(() => abortCtrl?.abort())
       <ul class="conv-list">
         <li v-if="conversationError" class="conv-error">{{ conversationError }}</li>
         <li v-if="modelsError" class="conv-error">模型加载失败：{{ modelsError }}</li>
+        <li v-if="agentsError" class="conv-error">智能体加载失败：{{ agentsError }}</li>
         <li v-if="conversationLoading" class="conv-empty">加载中…</li>
         <li
           v-for="c in conversations"
@@ -702,7 +762,7 @@ onBeforeUnmount(() => abortCtrl?.abort())
                 <button type="button" class="thinking-toggle" @click="toggleThinking(m.id)">
                   <span class="thinking-indicator" :class="{ running: m.status === 0 }" />
                   <span>{{ m.status === 0 ? '过程进行中' : m.status === 2 ? '过程失败' : '查看过程记录' }}</span>
-                  <span class="thinking-safe-note">安全摘要 · 不含隐藏思维链</span>
+                  <span class="thinking-safe-note">含模型推理思维链</span>
                   <span class="thinking-chevron">{{ expandedThinking[m.id] ? '收起' : '展开' }}</span>
                 </button>
                 <div v-if="expandedThinking[m.id]" class="thinking-steps" aria-live="polite">
@@ -714,6 +774,10 @@ onBeforeUnmount(() => abortCtrl?.abort())
                     <span>{{ step.label }}</span>
                     <span v-if="step.detail" class="thinking-step-detail">{{ step.detail }}</span>
                   </div>
+                </div>
+                <div v-if="reasoningByMsg[m.id]" class="reasoning-block">
+                  <div class="reasoning-head">🧠 模型思维链（推理过程）</div>
+                  <pre class="reasoning-text">{{ reasoningByMsg[m.id] }}</pre>
                 </div>
               </div>
               <template v-if="m.content">
@@ -759,15 +823,18 @@ onBeforeUnmount(() => abortCtrl?.abort())
                   <span :class="['tl-status', call.status]">{{ statusLabel(call.status) }}</span>
                 </div>
                 <pre v-if="Object.keys(call.arguments).length" class="tl-args">{{ fmtArgs(call.arguments) }}</pre>
-                <pre v-if="call.status !== 'running'" class="tl-result">{{ call.errorMessage || fmtResult(call.result) }}</pre>
+                <pre v-if="call.status !== 'running' && !isKnowledgeTool(call)" class="tl-result">{{ call.errorMessage || fmtResult(call.result) }}</pre>
+                <pre v-else-if="call.status !== 'running' && isKnowledgeTool(call)" class="tl-result tl-result--rag">{{ showProcess ? (call.errorMessage || fmtResult(call.result)) : knowledgeSummary(call.result) }}</pre>
               </div>
             </div>
           </template>
         </div>
 
         <div v-if="!messages.length" class="msg-empty">
-          <p class="msg-empty-title">开始与 AgentForge 对话</p>
-          <p class="msg-empty-desc">支持工具调用 / 技能执行 / 知识检索，全过程可视化</p>
+          <div class="msg-empty-orbit" aria-hidden="true"><span /><i /><b /></div>
+          <p class="label-group msg-empty-kicker">AGENTFORGE / LIVE CANVAS</p>
+          <p class="msg-empty-title">开始一次有轨迹的对话</p>
+          <p class="msg-empty-desc">工具、技能与知识检索将沿着生命线留下可追溯的过程。</p>
         </div>
       </div>
 
@@ -775,6 +842,14 @@ onBeforeUnmount(() => abortCtrl?.abort())
       <div class="composer">
         <div v-if="modelSwitchTip" class="model-switch-tip">
           {{ modelSwitchTip }}
+        </div>
+        <div class="process-toggle">
+          <label class="switch">
+            <input type="checkbox" v-model="showProcess" />
+            <span class="switch-track"><span class="switch-thumb" /></span>
+          </label>
+          <span class="process-toggle-label">展开知识检索结果</span>
+          <span class="process-toggle-hint">关闭时仅展示检索轨迹，不展开召回内容</span>
         </div>
         <div v-if="!streaming" class="suggest">
           <button
@@ -791,7 +866,7 @@ onBeforeUnmount(() => abortCtrl?.abort())
           <select
             v-model="activeAgentId"
             class="composer-model"
-            :disabled="streaming || modelsLoading"
+            :disabled="streaming || agentsLoading"
             title="选择本次对话使用的智能体"
           >
             <option :value="null">默认助手</option>
@@ -828,9 +903,9 @@ onBeforeUnmount(() => abortCtrl?.abort())
             停止
           </AfButton>
         </div>
-        <p class="composer-hint mono">
-          模型：{{ activeModelName }} · Agent 引擎 v0.11 · LangGraph ReAct · SSE 流式
-        </p>
+          <p class="composer-hint mono">
+            模型：{{ activeModelName }} · 智能体：{{ activeAgentName }} · Agent 引擎 v0.11 · LangGraph ReAct · SSE 流式
+          </p>
       </div>
     </main>
   </div>
@@ -838,46 +913,40 @@ onBeforeUnmount(() => abortCtrl?.abort())
 
 <style scoped>
 .chat {
+  --side-width: 242px;
   display: flex;
   width: 100%;
   height: 100%;
   flex: 1;
   min-height: 0;
   overflow: hidden;
+  background: transparent;
 }
 
-/* ---------- 会话列表 ---------- */
+/* ---------- 会话轨 ---------- */
 .chat__side {
-  width: 224px;
+  width: var(--side-width);
   height: 100%;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   border-right: 1px solid var(--color-border);
-  background-color: var(--color-surface);
+  background: color-mix(in srgb, var(--color-surface) 84%, transparent);
 }
 .chat__side-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: var(--space-3) var(--space-3) var(--space-2);
+  padding: 17px 14px 12px;
   border-bottom: 1px solid var(--color-border);
 }
 .chat__side-title,
 .chat__side-actions,
-.conv-item-main {
-  display: flex;
-  align-items: center;
-}
-.chat__side-title {
-  min-width: 0;
-  gap: 6px;
-}
-.chat__side-actions {
-  gap: 6px;
-}
+.conv-item-main { display: flex; align-items: center; }
+.chat__side-title { min-width: 0; gap: 6px; }
+.chat__side-actions { gap: 6px; }
 .side-action,
 .toolbar-link,
 .toolbar-delete {
@@ -887,526 +956,172 @@ onBeforeUnmount(() => abortCtrl?.abort())
   font-size: var(--text-xs);
   white-space: nowrap;
 }
-.side-action {
-  padding: 5px 6px;
-  border-radius: var(--radius-sm);
-  color: var(--color-text-secondary);
-}
+.side-action { padding: 5px 6px; border-radius: var(--radius-sm); color: var(--color-text-secondary); }
 .side-action:hover,
-.side-action.active {
-  background: var(--color-surface-2);
-  color: var(--color-text);
-}
+.side-action.active { background: var(--color-surface-2); color: var(--color-text); }
 .side-action:disabled,
 .toolbar-link:disabled,
-.toolbar-delete:disabled {
-  cursor: not-allowed;
-  opacity: 0.45;
-}
-.selection-count {
-  color: var(--color-text-tertiary);
-  font-size: 10px;
-}
-.selection-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 7px var(--space-3);
-  border-bottom: 1px solid var(--color-border);
-  background: var(--color-surface-2);
-}
-.toolbar-link {
-  color: var(--color-text-secondary);
-}
-.toolbar-link:hover {
-  color: var(--color-text);
-}
-.toolbar-delete {
-  color: var(--color-danger);
-}
-.toolbar-delete:last-child {
-  margin-left: auto;
-}
-.conv-item-main {
-  min-width: 0;
-  gap: 7px;
-}
-.conv-checkbox {
-  flex-shrink: 0;
-  width: 14px;
-  height: 14px;
-  accent-color: var(--color-text);
-}
-.conv-item.selected {
-  background-color: var(--color-surface-2);
-}
-.conv-item-del:disabled {
-  cursor: not-allowed;
-  opacity: 0.45;
-}
-.conv-list {
-  list-style: none;
-  margin: 0;
-  padding: var(--space-2);
-  overflow-y: auto;
-  flex: 1;
-}
+.toolbar-delete:disabled { cursor: not-allowed; opacity: 0.45; }
+.selection-count { color: var(--color-text-tertiary); font-size: 10px; }
+.selection-toolbar { display: flex; align-items: center; gap: 8px; padding: 8px 13px; border-bottom: 1px solid var(--color-border); background: var(--color-surface-2); }
+.toolbar-link { color: var(--color-text-secondary); }
+.toolbar-link:hover { color: var(--color-text); }
+.toolbar-delete { color: var(--color-danger); }
+.toolbar-delete:last-child { margin-left: auto; }
+.conv-item-main { min-width: 0; gap: 7px; }
+.conv-checkbox { flex-shrink: 0; width: 14px; height: 14px; accent-color: var(--color-primary); }
+.conv-item.selected { background-color: var(--color-surface-2); }
+.conv-item-del:disabled { cursor: not-allowed; opacity: 0.45; }
+.conv-list { display: flex; flex: 1; flex-direction: column; gap: 3px; margin: 0; padding: 10px 8px; overflow-y: auto; }
 .conv-item {
-  padding: 8px 10px;
-  border-radius: var(--radius-sm);
+  position: relative;
+  padding: 10px 11px;
+  border: 1px solid transparent;
+  border-radius: 10px;
   cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  transition: background-color var(--transition-fast);
-}
-.conv-item:hover {
-  background-color: var(--color-surface-2);
-}
-.conv-item.active {
-  background-color: var(--color-surface-2);
-  box-shadow: inset 2px 0 0 var(--color-text);
-}
-.conv-item-title {
-  font-size: var(--text-base);
-  color: var(--color-text);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.conv-item-sub {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: var(--text-xs);
-  color: var(--color-text-tertiary);
-}
-.conv-item-del {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  border: none;
-  border-radius: 4px;
-  background: transparent;
-  color: var(--color-text-tertiary);
-  cursor: pointer;
-  opacity: 0;
-  transition: opacity var(--transition-fast), color var(--transition-fast);
-}
-.conv-item:hover .conv-item-del,
-.conv-item.active .conv-item-del {
-  opacity: 1;
-}
-.conv-item-del:hover {
-  color: var(--color-danger);
-}
-.conv-empty {
-  padding: var(--space-4);
-  font-size: var(--text-sm);
-  color: var(--color-text-tertiary);
-  text-align: center;
-}
-.conv-error {
-  padding: var(--space-3);
-  color: var(--color-danger);
-  font-size: var(--text-sm);
-  line-height: 1.5;
-}
-
-/* ---------- 消息区 ---------- */
-.chat__main {
-  flex: 1;
-  min-width: 0;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-.msg-area {
-  flex: 1;
-  overflow-y: auto;
-  padding: var(--space-6) var(--space-6);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-}
-.msg {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  max-width: 760px;
-}
-.msg.user {
-  align-self: flex-end;
-  align-items: flex-end;
-}
-.msg-role {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: var(--text-xs);
-  color: var(--color-text-tertiary);
-}
-.msg-tag {
-  padding: 1px 6px;
-  border-radius: 999px;
-  font-size: 10px;
-}
-.msg-tag.running {
-  background: var(--color-surface-2);
-  color: var(--color-text-secondary);
-  animation: pulse 1.2s ease-in-out infinite;
-}
-.msg-tag.error {
-  background: var(--color-danger-bg);
-  color: var(--color-danger);
-}
-.msg-model {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  color: var(--color-text-tertiary);
-}
-.msg-body {
-  padding: 10px 14px;
-  border-radius: var(--radius-md);
-  font-size: var(--text-md);
-  line-height: 1.7;
-}
-.user-body {
-  background: var(--color-surface-2);
-  border: 1px solid var(--color-border);
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-.thinking-panel {
-  margin-bottom: 10px;
-  border-bottom: 1px solid var(--color-border);
-  padding-bottom: 8px;
-}
-.thinking-toggle {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  width: 100%;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  font-size: var(--text-xs);
-  text-align: left;
-}
-.thinking-toggle:hover {
-  color: var(--color-text);
-}
-.thinking-indicator {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--color-text-tertiary);
-}
-.thinking-indicator.running {
-  background: var(--color-warning);
-  animation: pulse 1.2s ease-in-out infinite;
-}
-.thinking-safe-note {
-  color: var(--color-text-tertiary);
-  font-size: 10px;
-}
-.thinking-chevron {
-  margin-left: auto;
-  color: var(--color-text-tertiary);
-  font-size: 10px;
-}
-.thinking-steps {
   display: flex;
   flex-direction: column;
   gap: 5px;
-  margin-top: 8px;
-  color: var(--color-text-secondary);
-  font-size: var(--text-xs);
+  transition: background-color var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
 }
-.thinking-step {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-}
-.thinking-step-phase {
-  flex-shrink: 0;
-  min-width: 32px;
-  color: var(--color-text-tertiary);
-  font-size: 10px;
-  text-align: center;
-}
-.thinking-step-mark {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: var(--color-surface-2);
-  color: var(--color-text-tertiary);
-  font-size: 10px;
-}
-.thinking-step-mark.running {
-  color: var(--color-warning);
-}
-.thinking-step-mark.done {
-  color: var(--color-success);
-}
-.thinking-step-mark.error {
-  color: var(--color-danger);
-}
-.thinking-step-detail {
-  overflow: hidden;
-  color: var(--color-text-tertiary);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+.conv-item:hover { background-color: var(--color-surface-2); transform: translateX(2px); }
+.conv-item.active { border-color: var(--color-border); background-color: var(--color-surface-raised); box-shadow: var(--shadow-float); }
+.conv-item.active::before { position: absolute; left: 0; top: 12px; bottom: 12px; width: 2px; border-radius: var(--radius-pill); content: ''; background: var(--color-lifeline); }
+.conv-item-title { font-size: var(--text-base); color: var(--color-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.conv-item-sub { display: flex; align-items: center; justify-content: space-between; font-size: var(--text-xs); color: var(--color-text-tertiary); }
+.conv-item-del { display: flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 6px; background: transparent; color: var(--color-text-tertiary); cursor: pointer; opacity: 0; transition: opacity var(--transition-fast), color var(--transition-fast), background-color var(--transition-fast); }
+.conv-item:hover .conv-item-del,
+.conv-item.active .conv-item-del { opacity: 1; }
+.conv-item-del:hover { color: var(--color-danger); background: var(--color-danger-bg); }
+.conv-empty { padding: var(--space-4); font-size: var(--text-sm); color: var(--color-text-tertiary); text-align: center; }
+.conv-error { padding: var(--space-3); color: var(--color-danger); font-size: var(--text-sm); line-height: 1.5; }
 
-.assistant-body {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-}
-.msg-think {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--color-text-tertiary);
-  font-size: var(--text-base);
-}
-.dots::after {
-  content: '…';
-  animation: dots 1.2s steps(4, end) infinite;
-}
-@keyframes dots {
-  0% { content: ''; }
-  25% { content: '.'; }
-  50% { content: '..'; }
-  75% { content: '...'; }
-}
-.caret {
-  display: inline-block;
-  width: 7px;
-  height: 14px;
-  background: var(--color-text);
-  margin-left: 2px;
-  vertical-align: text-bottom;
-  animation: blink 1s step-end infinite;
-}
-@keyframes blink {
-  50% { opacity: 0; }
-}
-@keyframes pulse {
-  50% { opacity: 0.45; }
-}
-.msg-empty {
-  margin: auto;
-  text-align: center;
-  color: var(--color-text-tertiary);
-}
-.msg-empty-title {
-  font-size: var(--text-lg);
-  font-weight: var(--weight-semibold);
-  color: var(--color-text);
-  letter-spacing: var(--tracking-tight);
-  margin-bottom: 4px;
-}
-.msg-empty-desc {
-  font-size: var(--text-base);
-}
+/* ---------- 主画布 ---------- */
+.chat__main { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+.msg-area { flex: 1; overflow-y: auto; padding: 36px clamp(24px, 5vw, 74px); display: flex; flex-direction: column; gap: 22px; }
+.msg { position: relative; display: flex; flex-direction: column; gap: 6px; width: min(100%, 800px); }
+.msg.user { align-self: flex-end; align-items: flex-end; max-width: min(78%, 680px); }
+.msg-role { display: flex; align-items: center; gap: 7px; color: var(--color-text-tertiary); font-size: var(--text-xs); letter-spacing: 0.035em; }
+.msg-tag { padding: 2px 7px; border-radius: var(--radius-pill); font-size: 10px; }
+.msg-tag.running { background: var(--color-warning-bg); color: var(--color-warning); animation: pulse 1.4s ease-in-out infinite; }
+.msg-tag.error { background: var(--color-danger-bg); color: var(--color-danger); }
+.msg-model { font-family: var(--font-mono); font-size: 10px; color: var(--color-text-tertiary); }
+.msg-body { padding: 14px 16px; border-radius: var(--radius-lg); font-size: var(--text-md); line-height: 1.75; }
+.user-body { border: 1px solid var(--color-border); background: var(--color-surface-2); white-space: pre-wrap; word-break: break-word; border-top-right-radius: 5px; }
+.assistant-body { position: relative; border: 1px solid var(--color-border); background: color-mix(in srgb, var(--color-surface-raised) 92%, transparent); border-top-left-radius: 5px; box-shadow: 0 1px 0 color-mix(in srgb, var(--color-surface-raised) 90%, transparent); }
+.assistant-body::before { position: absolute; top: 17px; left: -1px; width: 2px; height: 28px; content: ''; border-radius: var(--radius-pill); background: var(--color-lifeline); }
 
-/* ---------- 时间线卡片 ---------- */
-.timeline {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-top: 2px;
-  max-width: 560px;
-}
-.tl-card {
-  padding: 8px 12px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background: var(--color-surface);
-}
-.tl-card.running {
-  border-color: var(--color-border-strong);
-}
+/* ---------- 安全过程生命线 ---------- */
+.thinking-panel { margin-bottom: 13px; padding: 10px 11px 10px 14px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); }
+.thinking-toggle { display: flex; align-items: center; gap: 7px; width: 100%; border: 0; background: transparent; color: var(--color-text-secondary); cursor: pointer; font-size: var(--text-xs); text-align: left; }
+.thinking-toggle:hover { color: var(--color-text); }
+.thinking-indicator { width: 7px; height: 7px; border-radius: 50%; background: var(--color-text-tertiary); }
+.thinking-indicator.running { background: var(--color-spectrum-d); box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-spectrum-d) 14%, transparent); animation: pulse 1.2s ease-in-out infinite; }
+.thinking-safe-note { padding: 2px 6px; border-radius: var(--radius-pill); background: var(--color-surface-2); color: var(--color-text-tertiary); font-size: 10px; }
+.thinking-chevron { margin-left: auto; color: var(--color-text-tertiary); font-size: 10px; }
+.thinking-steps { position: relative; display: flex; flex-direction: column; gap: 8px; margin: 11px 0 1px 3px; padding-left: 16px; color: var(--color-text-secondary); font-size: var(--text-xs); }
+.thinking-steps::before { position: absolute; top: 5px; bottom: 5px; left: 3px; width: 2px; content: ''; background: var(--color-lifeline); opacity: 0.75; }
+.thinking-step { position: relative; display: flex; align-items: center; gap: 7px; min-width: 0; }
+.thinking-step-mark { position: relative; z-index: 1; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 13px; height: 13px; margin-left: -22px; border: 2px solid var(--color-surface); border-radius: 50%; background: var(--color-text-tertiary); color: var(--color-surface); font-size: 9px; }
+.thinking-step-mark.running { background: var(--color-spectrum-d); animation: pulse 1.2s ease-in-out infinite; }
+.thinking-step-mark.done { background: var(--color-success); }
+.thinking-step-mark.error { background: var(--color-danger); }
+.thinking-step-phase { flex-shrink: 0; min-width: 32px; padding: 1px 4px; border-radius: 4px; background: var(--color-surface-2); color: var(--color-text-tertiary); font-size: 9px; text-align: center; }
+.thinking-step-detail { overflow: hidden; color: var(--color-text-tertiary); text-overflow: ellipsis; white-space: nowrap; }
+.msg-think { display: flex; align-items: center; gap: 6px; color: var(--color-text-tertiary); font-size: var(--text-base); }
+.dots::after { content: '…'; animation: dots 1.2s steps(4, end) infinite; }
+@keyframes dots { 0% { content: ''; } 25% { content: '.'; } 50% { content: '..'; } 75% { content: '...'; } }
+.caret { display: inline-block; width: 2px; height: 16px; margin-left: 3px; vertical-align: text-bottom; border-radius: var(--radius-pill); background: var(--color-spectrum-d); animation: blink 1s step-end infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+@keyframes pulse { 50% { opacity: 0.45; } }
+
+.msg-empty { margin: auto; max-width: 440px; text-align: center; color: var(--color-text-tertiary); }
+.msg-empty-orbit { position: relative; width: 68px; height: 68px; margin: 0 auto 20px; border: 1px solid var(--color-border-strong); border-radius: 50%; }
+.msg-empty-orbit::before { position: absolute; inset: 12px; border: 1px solid var(--color-border); border-radius: inherit; content: ''; }
+.msg-empty-orbit span,
+.msg-empty-orbit i,
+.msg-empty-orbit b { position: absolute; display: block; border-radius: 50%; background: var(--color-lifeline); }
+.msg-empty-orbit span { top: -3px; left: 17px; width: 7px; height: 7px; }
+.msg-empty-orbit i { right: -3px; bottom: 15px; width: 8px; height: 8px; }
+.msg-empty-orbit b { bottom: 5px; left: 7px; width: 5px; height: 5px; }
+.msg-empty-kicker { margin-bottom: 8px; font-size: 9px; }
+.msg-empty-title { margin-bottom: 6px; color: var(--color-text); font-size: 22px; font-weight: var(--weight-semibold); letter-spacing: var(--tracking-tight); }
+.msg-empty-desc { font-size: var(--text-base); line-height: 1.8; }
+
+/* ---------- 工具与技能轨迹 ---------- */
+.timeline { position: relative; display: flex; flex-direction: column; gap: 7px; max-width: 590px; margin: 1px 0 0 14px; padding-left: 15px; }
+.timeline::before { position: absolute; top: 0; bottom: 8px; left: 4px; width: 2px; border-radius: var(--radius-pill); content: ''; background: var(--color-lifeline); opacity: 0.72; }
+.tl-card { position: relative; padding: 10px 12px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); }
+.tl-card::before { position: absolute; top: 16px; left: -15px; width: 8px; height: 8px; box-sizing: border-box; border: 2px solid var(--color-surface); border-radius: 50%; content: ''; background: var(--color-spectrum-d); }
+.tl-card.skill::before { background: var(--color-spectrum-e); }
+.tl-card.running { border-color: var(--color-border-strong); }
 .tl-card.error,
-.tl-card.timeout {
-  border-color: var(--color-danger);
-}
-.tl-head {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: var(--text-sm);
-}
-.tl-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  border-radius: 5px;
-  background: var(--color-surface-2);
-  color: var(--color-text-secondary);
-}
-.tl-card.skill .tl-icon {
-  color: var(--color-warning);
-}
-.tl-name {
-  font-weight: var(--weight-medium);
-  color: var(--color-text);
-}
-.tl-ver {
-  font-size: 10px;
-  color: var(--color-text-tertiary);
-}
-.tl-code {
-  font-size: 10px;
-  color: var(--color-text-tertiary);
-}
-.tl-spacer {
-  flex: 1;
-}
-.tl-dur {
-  font-size: 10px;
-  color: var(--color-text-tertiary);
-}
-.tl-status {
-  font-size: 10px;
-  padding: 1px 6px;
-  border-radius: 999px;
-  background: var(--color-surface-2);
-  color: var(--color-text-secondary);
-}
-.tl-status.running {
-  animation: pulse 1.2s ease-in-out infinite;
-}
-.tl-status.success {
-  background: transparent;
-  color: var(--color-success);
-}
-.tl-status.error,
-.tl-status.timeout {
-  color: var(--color-danger);
-}
-.tl-args,
-.tl-result {
-  margin: 6px 0 0;
-  padding: 6px 8px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  line-height: 1.55;
-  white-space: pre-wrap;
-  word-break: break-all;
-  border-radius: 4px;
-  background: var(--color-surface-2);
-  color: var(--color-text-secondary);
-}
-.tl-result {
-  color: var(--color-text);
-  background: transparent;
-  border-left: 2px solid var(--color-border-strong);
-  border-radius: 0;
-}
+.tl-card.timeout { border-color: var(--color-danger); }
+.tl-card.error::before,
+.tl-card.timeout::before { background: var(--color-danger); }
+.tl-head { display: flex; align-items: center; gap: 7px; font-size: var(--text-sm); }
+.tl-icon { display: flex; align-items: center; justify-content: center; width: 23px; height: 23px; border: 1px solid var(--color-border); border-radius: 7px; background: var(--color-icon-bg); color: var(--color-spectrum-d); }
+.tl-card.skill .tl-icon { color: var(--color-spectrum-e); }
+.tl-name { font-weight: var(--weight-medium); color: var(--color-text); }
+.tl-ver, .tl-code, .tl-dur { font-size: 10px; color: var(--color-text-tertiary); }
+.tl-spacer { flex: 1; }
+.tl-status { padding: 2px 7px; border-radius: var(--radius-pill); background: var(--color-surface-2); color: var(--color-text-secondary); font-size: 10px; }
+.tl-status.running { color: var(--color-spectrum-d); animation: pulse 1.2s ease-in-out infinite; }
+.tl-status.success { background: var(--color-success-bg); color: var(--color-success); }
+.tl-status.error, .tl-status.timeout { background: var(--color-danger-bg); color: var(--color-danger); }
+.tl-args, .tl-result { margin: 8px 0 0; padding: 7px 9px; border-radius: var(--radius-sm); background: var(--color-surface-2); color: var(--color-text-secondary); font-family: var(--font-mono); font-size: 11px; line-height: 1.55; white-space: pre-wrap; word-break: break-all; }
+.tl-result { border-left: 2px solid var(--color-border-strong); border-radius: 0; background: transparent; color: var(--color-text); }
 
-/* ---------- 输入区 ---------- */
-.composer {
-  padding: var(--space-3) var(--space-6) var(--space-3);
-  border-top: 1px solid var(--color-border);
-  background-color: var(--color-surface);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
+/* ---------- 输入控制台 ---------- */
+.composer { padding: 13px clamp(24px, 5vw, 74px) 15px; border-top: 1px solid var(--color-border); background: color-mix(in srgb, var(--color-surface) 92%, transparent); display: flex; flex-direction: column; gap: 9px; }
+.model-switch-tip { padding: var(--space-2) var(--space-3); border: 1px solid var(--color-warning); border-radius: var(--radius-md); background: var(--color-warning-bg); color: var(--color-warning); font-size: var(--text-sm); }
+.suggest { display: flex; flex-wrap: wrap; gap: 6px; }
+.process-toggle { display: flex; align-items: center; gap: 9px; padding: 1px 2px; }
+.process-toggle-label { color: var(--color-text-secondary); font-size: var(--text-xs); }
+.process-toggle-hint { color: var(--color-text-tertiary); font-size: 10px; }
+.switch { position: relative; display: inline-flex; width: 34px; height: 19px; cursor: pointer; }
+.switch input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+.switch-track { position: relative; display: block; width: 34px; height: 19px; border-radius: 999px; background: var(--color-surface-2); border: 1px solid var(--color-border); transition: background-color var(--transition-fast); }
+.switch-thumb { position: absolute; top: 2px; left: 2px; width: 13px; height: 13px; border-radius: 50%; background: var(--color-text-tertiary); transition: transform var(--transition-fast), background-color var(--transition-fast); }
+.switch input:checked + .switch-track { background: var(--color-primary); border-color: var(--color-primary); }
+.switch input:checked + .switch-track .switch-thumb { transform: translateX(15px); background: #fff; }
+.tl-result--rag { color: var(--color-text-tertiary); font-style: italic; }
+.reasoning-block { margin-top: 10px; border-top: 1px dashed var(--color-border); padding-top: 10px; }
+.reasoning-head { font-size: var(--text-xs); color: var(--color-text-secondary); margin-bottom: 6px; font-weight: 600; }
+.reasoning-text { white-space: pre-wrap; word-break: break-word; font-size: var(--text-sm); line-height: 1.6; color: var(--color-text-secondary); max-height: 260px; overflow-y: auto; margin: 0; background: var(--color-surface-2); border-radius: 8px; padding: 10px 12px; }
+.suggest-chip { padding: 5px 10px; border: 1px solid var(--color-border); border-radius: var(--radius-pill); background: color-mix(in srgb, var(--color-surface-raised) 78%, transparent); color: var(--color-text-secondary); cursor: pointer; font-size: var(--text-sm); transition: color var(--transition-fast), border-color var(--transition-fast), background-color var(--transition-fast), transform var(--transition-fast); }
+.suggest-chip:hover { border-color: var(--color-border-strong); background: var(--color-surface-raised); color: var(--color-text); transform: translateY(-1px); }
+.composer-row { display: flex; align-items: flex-end; gap: 8px; padding: 7px; border: 1px solid var(--color-border-strong); border-radius: 15px; background: var(--color-surface-raised); box-shadow: var(--shadow-float); }
+.composer-model { align-self: stretch; flex-shrink: 0; width: 146px; min-height: 42px; padding: 0 9px; border: 1px solid transparent; border-radius: 10px; background: var(--color-surface-2); color: var(--color-text-secondary); font: inherit; font-size: var(--text-sm); cursor: pointer; transition: border-color var(--transition-fast), color var(--transition-fast), background-color var(--transition-fast); }
+.composer-model:hover:not(:disabled) { color: var(--color-text); border-color: var(--color-border-strong); }
+.composer-model:focus { outline: none; border-color: var(--color-focus); }
+.composer-model:disabled, .composer-input:disabled { opacity: 0.7; }
+.composer-input { flex: 1; resize: none; max-height: 120px; min-height: 42px; padding: 10px 8px; border: 1px solid transparent; border-radius: 10px; background: transparent; color: var(--color-text); font: inherit; font-size: var(--text-md); line-height: 1.6; }
+.composer-input:focus { outline: none; border-color: var(--color-border); background: var(--color-surface); }
+.composer-hint { padding-left: 5px; color: var(--color-text-tertiary); font-size: 10px; }
+
+@media (max-width: 860px) {
+  .chat { --side-width: 210px; }
+  .msg-area, .composer { padding-left: 24px; padding-right: 24px; }
+  .composer-model { width: 112px; }
 }
-.model-switch-tip {
-  font-size: var(--text-sm);
-  color: var(--color-warning, #f59e0b);
-  padding: var(--space-2) var(--space-3);
-  background: var(--color-warning-subtle, rgba(245, 158, 11, 0.1));
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-warning, #f59e0b);
+@media (max-width: 700px) {
+  .chat { --side-width: 184px; }
+  .chat__side-head { align-items: flex-start; flex-direction: column; }
+  .composer-row { flex-wrap: wrap; }
+  .composer-model { flex: 1; width: calc(50% - 4px); min-width: 0; }
+  .composer-input { min-width: 100%; }
 }
-.suggest {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+@media (max-width: 540px) {
+  .chat { --side-width: 0px; }
+  .chat__side { display: none; }
+  .msg-area, .composer { padding-left: 16px; padding-right: 16px; }
+  .msg.user { max-width: 92%; }
+  .timeline { margin-left: 9px; }
 }
-.suggest-chip {
-  padding: 4px 10px;
-  font-size: var(--text-sm);
-  color: var(--color-text-secondary);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 999px;
-  cursor: pointer;
-  transition: border-color var(--transition-fast), color var(--transition-fast);
-}
-.suggest-chip:hover {
-  color: var(--color-text);
-  border-color: var(--color-border-strong);
-}
-.composer-row {
-  display: flex;
-  gap: var(--space-2);
-  align-items: flex-end;
-}
-.composer-model {
-  flex-shrink: 0;
-  align-self: flex-end;
-  height: 44px;
-  max-width: 220px;
-  padding: 0 var(--space-3);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-surface);
-  color: var(--color-text-secondary);
-  font: inherit;
-  font-size: var(--text-sm);
-  cursor: pointer;
-  transition: border-color var(--transition-fast), color var(--transition-fast);
-}
-.composer-model:hover:not(:disabled) {
-  color: var(--color-text);
-  border-color: var(--color-border-strong);
-}
-.composer-model:focus {
-  outline: none;
-  border-color: var(--color-text);
-}
-.composer-model:disabled {
-  opacity: 0.7;
-}
-.composer-input {
-  flex: 1;
-  resize: none;
-  max-height: 120px;
-  min-height: 44px;
-  padding: 10px 12px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-bg);
-  color: var(--color-text);
-  font: inherit;
-  font-size: var(--text-md);
-  line-height: 1.6;
-  transition: border-color var(--transition-fast);
-}
-.composer-input:focus {
-  outline: none;
-  border-color: var(--color-text);
-}
-.composer-input:disabled {
-  opacity: 0.7;
-}
-.composer-hint {
-  font-size: 10px;
-  color: var(--color-text-tertiary);
-}
+/* ---- 小巧灵动会话画布：把大面板拆成轻量信息单元 ---- */
+.chat { --side-width: 218px; }.chat__side { background: color-mix(in srgb, var(--color-surface) 90%, transparent); }.chat__side-head { padding: 13px 11px 10px; }.conv-list { gap: 5px; padding: 9px 7px; }.conv-item { padding: 8px 9px; gap: 4px; border-radius: 12px; }.conv-item.active { box-shadow: 0 4px 14px color-mix(in srgb, var(--color-primary) 7%, transparent); }.conv-item.active::before { top: 10px; bottom: 10px; }.conv-item-title { font-size: var(--text-sm); }
+.msg-area { padding: 24px clamp(20px, 4vw, 58px); gap: 16px; }.msg { max-width: 740px; gap: 4px; }.msg-body { padding: 11px 13px; border-radius: 14px; font-size: var(--text-base); line-height: 1.7; }.assistant-body::before { top: 14px; height: 22px; }.thinking-panel { padding: 8px 9px 8px 12px; margin-bottom: 10px; border-radius: 11px; }.thinking-steps { gap: 6px; margin-top: 9px; }.timeline { gap: 6px; margin-left: 11px; padding-left: 13px; }.tl-card { padding: 8px 10px; border-radius: 11px; }.tl-card::before { top: 13px; left: -13px; }.tl-icon { width: 21px; height: 21px; border-radius: 7px; }
+.composer { gap: 7px; padding: 10px clamp(20px, 4vw, 58px) 11px; }.suggest { gap: 5px; }.suggest-chip { padding: 4px 8px; font-size: var(--text-xs); }.composer-row { gap: 6px; padding: 5px; border-radius: 13px; }.composer-model { width: 130px; min-height: 36px; border-radius: 9px; font-size: var(--text-xs); }.composer-input { min-height: 36px; padding: 8px 7px; font-size: var(--text-base); }.composer-hint { font-size: 9px; }
+@media (max-width: 860px) { .chat { --side-width: 192px; }.msg-area, .composer { padding-left: 18px; padding-right: 18px; }.composer-model { width: 105px; } }
 </style>

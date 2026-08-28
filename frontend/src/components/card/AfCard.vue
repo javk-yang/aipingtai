@@ -24,16 +24,18 @@ withDefaults(
 
 <style scoped>
 .af-card {
-  background-color: var(--color-surface);
+  position: relative;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--color-surface-raised) 94%, transparent);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  transition: border-color var(--transition-fast);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--color-surface-raised) 88%, transparent);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
 }
+.af-card::before { content: ''; position: absolute; inset: 0 0 auto; height: 2px; opacity: .72; background: var(--color-lifeline); }
 .af-card--sm { padding: var(--space-3); }
 .af-card--md { padding: var(--space-4); }
 .af-card--lg { padding: var(--space-6); }
 .af-card--none { padding: 0; }
-.af-card--hover:hover {
-  border-color: var(--color-border-strong);
-}
+.af-card--hover:hover { border-color: var(--color-border-strong); box-shadow: var(--shadow-float); transform: translateY(-2px); }
 </style>
