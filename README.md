@@ -37,6 +37,15 @@ Agent 引擎基于 FastAPI + LangChain + LangGraph
 知识库支持文档分块、检索与后续向量化演进
 平台提供 Agent、模型、工具、Skill、知识库、会话、审计和用量等完整管理模块
 适用场景
+<div>
+<img width="1468" height="820" alt="微信图片_20260902172703_755_116" src="https://github.com/user-attachments/assets/35bfd071-b732-401e-8c9c-4ac9edb2f6d1" />
+<img width="1468" height="820" alt="微信图片_20260902172703_754_116" src="https://github.com/user-attachments/assets/c743f250-bf55-429d-be84-0bd1b587fd7d" />
+<img width="2936" height="1700" alt="微信图片_20260902172702_753_116" src="https://github.com/user-attachments/assets/2ab9835f-9915-44e1-b5cf-fdfa5a8fa7d2" />
+<img width="2936" height="1700" alt="微信图片_20260902172702_752_116" src="https://github.com/user-attachments/assets/434be1a2-4d95-44ec-b1d0-da119a7dab2e" />
+<img width="2936" height="1700" alt="微信图片_20260902172702_751_116" src="https://github.com/user-attachments/assets/2fe80166-790f-467b-b30c-e9a09e37a13c" />
+<img width="2936" height="1700" alt="微信图片_20260902172702_750_116" src="https://github.com/user-attachments/assets/ed7e4b9f-aed5-4290-865d-8284e8755c72" />
+<img width="2936" height="1700" alt="微信图片_20260902172702_749_116" src="https://github.com/user-attachments/assets/ee4d86be-ccac-41b1-865b-b7d586b9e0db" />
+</div>
 AgentForge 可用于企业知识助手、客服辅助、标书审查、文案生成、数据分析、运营助手、流程审批辅助、内部制度问答、数字员工等场景。
 
-它的目标不是简单提供一个聊天窗口，而是帮助企业把分散的知识、工具、流程和业务规则，沉淀为可配置、可调用、可审计、可持续迭代的 AI Agent 能力。# aipingtai
+它的目标不是简单提供一个聊天窗口，而是帮助企业把分散的知识、工具、流程和业务规则，沉淀为可配置、可调用、可审计、可持续迭代的 AI Agent 能力。
